@@ -15,14 +15,15 @@ Bolt usage
 ==========
 
 To create your own Storm bolt connection:
-boltConn := storm.NewBoltConn()
-spoutConn.Initialise(fd)
+   boltConn := storm.NewBoltConn()
+   spoutConn.Initialise(fd)
 
 The Initialise(fd) function received the configuration from storm and reports your pid to storm. The file descriptor is the input file descriptor GoStorm should use to receive information from Storm. If you're not doing anything fancy, just use os.Stdin.
 
 I decided to pass in the input file descriptor so you can test your Storm bolt with an input test file of Storm data.
 
 In a bolt, you'll usually have something like this:
+```
 for {
   	tuple, eof := boltConn.ReadTuple()
 		if eof {
@@ -35,7 +36,8 @@ for {
     } else {
 		  boltConn.SendFail(tuple.Id)
     }
-	}
+}
+```
   
 Here, ReadTuple reads a single tuple. The tuple is processed in handleTuple, which takes the contents of the received tuple and produces some output data, which makes up the output of the bolt. The output data is then anchored to the received tuple's Id and emitted. After an anchored tuple has been emitted, the anchor should be acked.
 
@@ -45,14 +47,13 @@ Spout usage
 ===========
 
 To create your own Storm spout connection:
-spoutConn := storm.NewSpoutConn()
-spoutConn.Initialise()
-
-The Initialise() function received the configuration from storm and reports your pid to storm.
+   spoutConn := storm.NewSpoutConn()
+   spoutConn.Initialise()
 
 Since spouts are synchronous, a spout has to wait for next, ack or fail messages from Storm before it may send messages. After a spout has sent the messages it wishes to send, it has to send a sync message to Storm. The sync message signals that a spout will not send any more messages until the next "next", "ack" or "fail" message is received.
 
 Therefore, to emit one tuple for each progress message as a custom spout (mySpoutImpl), implement the following Emit function:
+```
 func (this *mySpoutImpl) Emit(msg interface{}) {
   spoutMsg, _ := this.spoutConn.ReadMsg()
 	switch spoutMsg.Command {
@@ -71,5 +72,6 @@ func (this *mySpoutImpl) Emit(msg interface{}) {
 		panic("Unknown command received from Storm")
 	}
 }
+```
 
 This function might still be integrated into the Storm library itself. I just need to think about how best to combine Emiting data with handling acks and fails.
