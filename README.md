@@ -61,17 +61,17 @@ Therefore, to emit one tuple for each progress message as a custom spout (mySpou
 func (this *mySpoutImpl) Emit(msg interface{}) {
   spoutMsg, _ := this.spoutConn.ReadMsg()
 	switch spoutMsg.Command {
-	case "next", "ack", "fail":
+	case "next":
 		this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
 		this.spoutConn.SendSync()
-  case "ack:
-    this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
-    handleAck(spoutMsg)
-  	this.spoutConn.SendSync()
-  case "fail":
-    this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
-    handleFail(spoutMsg)
-  	this.spoutConn.SendSync()
+  	case "ack":
+    		this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
+    		handleAck(spoutMsg)
+  		this.spoutConn.SendSync()
+  	case "fail":
+    		this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
+    		handleFail(spoutMsg)
+  		this.spoutConn.SendSync()
 	default:
 		panic("Unknown command received from Storm")
 	}
