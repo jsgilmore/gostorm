@@ -1,4 +1,4 @@
-package gostorm
+package storm
 
 import (
 	"bufio"
@@ -166,6 +166,9 @@ func (this *stormConnImpl) TestInput(filename string) {
 	this.input = fi
 }
 
+// Initialise set the storm input reader to the specified file
+// descriptor, reads the topology configuration for Storm and reports
+// the pid to Storm
 func (this *stormConnImpl) Initialise(fi *os.File) {
 	this.input = fi
 	this.reader = bufio.NewReader(fi)
@@ -185,6 +188,7 @@ type logMsg struct {
 	Msg     string `json:"msg"`
 }
 
+// Log sends a log message that will be logged by Storm
 func (this *stormConnImpl) Log(text string) {
 	msg := logMsg{
 		Command: "log",
@@ -197,6 +201,7 @@ func (this *stormConnImpl) Log(text string) {
 // Bolt
 //-------------------------------------------------------------------
 
+// NewBoltConn returns a Storm bolt connection that a Go bolt can use to communicate with Storm
 func NewBoltConn() BoltConn {
 	boltConn := &boltConnImpl{
 		stormConnImpl: newStormConn(bolt),
@@ -228,6 +233,10 @@ type tupleMsg struct {
 	Contents []interface{} `json:"tuple"`
 }
 
+// ReadTuple reads a tuple from Storm
+// It ensures that Storm was first initialised. If an input file is
+// used, eof might be returned, which has to be handled by the calling
+// application.
 func (this *boltConnImpl) ReadTuple() (tuple *tupleMsg, eof bool) {
 	if this.conf == nil {
 		panic("Attempting to read from uninitialised Storm connection")
@@ -238,6 +247,9 @@ func (this *boltConnImpl) ReadTuple() (tuple *tupleMsg, eof bool) {
 	return tuple, eof
 }
 
+// SendAck acks the received message id
+// SendAck has to be called after an emission anchored to the acked id,
+// otherwise Storm will report an error.
 func (this *boltConnImpl) SendAck(id string) {
 	msg := &spoutMsg{
 		Command: "ack",
@@ -246,6 +258,8 @@ func (this *boltConnImpl) SendAck(id string) {
 	this.sendMsg(msg)
 }
 
+// SendFail reports that the message with the given Id failed
+// No emission should be anchored to a failed message Id
 func (this *boltConnImpl) SendFail(id string) {
 	msg := &spoutMsg{
 		Command: "fail",
@@ -280,6 +294,10 @@ type boltDirectEmission struct {
 	Contents []interface{} `json:"tuple"`
 }
 
+// Emit emits a tuple with the given array of interface{}s as values,
+// anchored to the given array of taskIds, sent out on the given stream.
+// A stream value of "" or "default" can be used to denote the default stream
+// The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) Emit(contents []interface{}, anchors []string, stream string) (taskIds []int) {
 	emission := boltEmission{
 		Command:  "emit",
@@ -296,6 +314,13 @@ func (this *boltConnImpl) Emit(contents []interface{}, anchors []string, stream 
 	return taskIds
 }
 
+// EmitDirect emits a tuple with the given array of interface{}s as values,
+// anchored to the given array of taskIds, sent out on the given stream,
+// to the given taskId.
+// The topology should have been configured for direct transmission
+// for this call to work.
+// A stream value of "" or "default" can be used to denote the default stream
+// The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) EmitDirect(contents []interface{}, anchors []string, stream string, directTask int) {
 	emission := boltDirectEmission{
 		Command:  "emit",
@@ -311,6 +336,7 @@ func (this *boltConnImpl) EmitDirect(contents []interface{}, anchors []string, s
 // Spout
 //-------------------------------------------------------------------
 
+// NewSpoutConn returns a Storm spout connection that a Go spout can use to communicate with Storm
 func NewSpoutConn() SpoutConn {
 	spoutConn := &spoutConnImpl{
 		stormConnImpl: newStormConn(spout),
@@ -333,6 +359,9 @@ type spoutMsg struct {
 	Id      string `json:"id,omitempty"`
 }
 
+// ReadMsg reads a message from Storm.
+// The message read can be either a next, ack or fail message.
+// A check is performed to verify that Storm has been initialised.
 func (this *spoutConnImpl) ReadMsg() (msg *spoutMsg, eof bool) {
 	if this.conf == nil {
 		panic("Attempting to read from uninitialised Storm connection")
@@ -348,6 +377,10 @@ func (this *spoutConnImpl) ReadMsg() (msg *spoutMsg, eof bool) {
 	return msg, eof
 }
 
+// SendSync sends a sync message to Storm.
+// After a sync message is sent, it is not possible for a spout to
+// emit a message before a ReadMsg has been performed. This is to
+// enforce the synchronous behaviour of a spout as required by Storm.
 func (this *spoutConnImpl) SendSync() {
 	this.readyToSend = false
 	// Storm requires that a spout sleeps for "a small amount of
@@ -391,6 +424,10 @@ type spoutDirectEmission struct {
 	Contents []interface{} `json:"tuple"`
 }
 
+// Emit emits a tuple with the given array of interface{}s as values,
+// with the given taskId, sent out on the given stream.
+// A stream value of "" or "default" can be used to denote the default stream
+// The function returns a list of taskIds to which the message was sent.
 func (this *spoutConnImpl) Emit(contents []interface{}, id string, stream string) (taskIds []int) {
 	if !this.readyToSend {
 		panic("Spout not ready to send")
@@ -410,6 +447,12 @@ func (this *spoutConnImpl) Emit(contents []interface{}, id string, stream string
 	return taskIds
 }
 
+// EmitDirect emits a tuple with the given array of interface{}s as values,
+// with the given taskId, sent out on the given stream, to the given taskId.
+// The topology should have been configured for direct transmission
+// for this call to work.
+// A stream value of "" or "default" can be used to denote the default stream
+// The function returns a list of taskIds to which the message was sent.
 func (this *spoutConnImpl) EmitDirect(contents []interface{}, id string, stream string, directTask int) {
 	if !this.readyToSend {
 		panic("Spout not ready to send")
