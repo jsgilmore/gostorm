@@ -7,7 +7,7 @@ GoStorm is still an alpha release under active development. That said, GoStorm i
 
 Currently, the main purpose of GoStorm is to act as a library for Go spouts and bolts that wish to interact with a Storm topology. The topology definition itself should still be done in Java and a shell spout or bolt is still required for each Go spout or bolt. See the storm-starter WordCountTopology on how to do this.
 
-For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the storm-starter WordCountTopology.
+For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the storm-starter WordCountTopology (https://github.com/nathanmarz/storm-starter).
 
 The GoStorm API provides two types of Storm connections: SpoutConn and BoltConn. Both of the underlying structures implement some of the more finicky parts of the Storm communications protocol, so you don't have to worry about them.
 
