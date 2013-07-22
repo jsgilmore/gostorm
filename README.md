@@ -15,15 +15,17 @@ Bolt usage
 ==========
 
 To create your own Storm bolt connection:
-   boltConn := storm.NewBoltConn()
-   spoutConn.Initialise(fd)
+```go
+boltConn := storm.NewBoltConn()
+spoutConn.Initialise(fd)
+```
 
 The Initialise(fd) function received the configuration from storm and reports your pid to storm. The file descriptor is the input file descriptor GoStorm should use to receive information from Storm. If you're not doing anything fancy, just use os.Stdin.
 
 I decided to pass in the input file descriptor so you can test your Storm bolt with an input test file of Storm data.
 
 In a bolt, you'll usually have something like this:
-```
+```go
 for {
   	tuple, eof := boltConn.ReadTuple()
 		if eof {
@@ -47,13 +49,15 @@ Spout usage
 ===========
 
 To create your own Storm spout connection:
-   spoutConn := storm.NewSpoutConn()
-   spoutConn.Initialise()
+```go
+spoutConn := storm.NewSpoutConn()
+spoutConn.Initialise()
+```
 
 Since spouts are synchronous, a spout has to wait for next, ack or fail messages from Storm before it may send messages. After a spout has sent the messages it wishes to send, it has to send a sync message to Storm. The sync message signals that a spout will not send any more messages until the next "next", "ack" or "fail" message is received.
 
 Therefore, to emit one tuple for each progress message as a custom spout (mySpoutImpl), implement the following Emit function:
-```
+```go
 func (this *mySpoutImpl) Emit(msg interface{}) {
   spoutMsg, _ := this.spoutConn.ReadMsg()
 	switch spoutMsg.Command {
