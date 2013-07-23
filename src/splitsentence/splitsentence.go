@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"storm"
+	"gostorm"
 	"strings"
 )
 

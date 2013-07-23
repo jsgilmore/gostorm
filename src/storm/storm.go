@@ -1,4 +1,8 @@
-package storm
+
+// Package gostorm is a library that allows Go programs to function as
+// part of a storm topology by implementing the storm multilang
+// communications protocol.
+package gostorm
 
 import (
 	"bufio"
