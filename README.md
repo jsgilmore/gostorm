@@ -32,7 +32,7 @@ for {
 	}
 	data, ok := handleMsg(msg)
 	if ok {
-		boltConn.Emit(, []string{tuple.Id}, "", data)
+		boltConn.Emit([]string{tuple.Id}, "", data)
 		boltConn.sendAck(meta.Id)
 	} else {
 		boltConn.SendFail(meta.Id)
