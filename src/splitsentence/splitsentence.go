@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"gostorm"
 	"log"
 	"os"
 	"os/signal"
-	"gostorm"
 	"strings"
 )
 
@@ -45,15 +45,15 @@ func main() {
 	}()
 
 	boltConn := gostorm.NewBoltConn()
-	boltConn.Initialise()
+	boltConn.Initialise(os.Stdin, os.Stdout)
 
-	var sentence string
 	for {
-		meta := boltConn.ReadTuple(sentence)
-		if eof {
-			return
+		// We have to read Raw here, since the spout is not json encoding the tuple contents
+		tuple, err := boltConn.ReadRawTuple()
+		if err != nil {
+			panic(err)
 		}
-		emitWords(sentence, meta.Id, boltConn)
-		boltConn.SendAck(meta.Id)
+		emitWords(tuple.Contents[0].(string), tuple.Id, boltConn)
+		boltConn.SendAck(tuple.Id)
 	}
 }

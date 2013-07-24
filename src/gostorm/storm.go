@@ -1,4 +1,4 @@
-package storm
+package gostorm
 
 import (
 	"bufio"
@@ -24,7 +24,7 @@ type BoltConn interface {
 	Initialise(reader io.Reader, writer io.Writer)
 	Log(msg string)
 	ReadTuple(contentStructs ...interface{}) (meta *TupleMetadata, err error)
-	ReadRawTuple() (tuple *TupleMsg, err error)
+	ReadRawTuple() (tuple *RawTupleMsg, err error)
 	SendAck(id string)
 	SendFail(id string)
 	Emit(anchors []string, stream string, content ...interface{}) (taskIds []int)
@@ -74,8 +74,6 @@ func (this *stormConnImpl) readMsg(msg interface{}) error {
 
 	// Remove the newline character
 	data = bytes.Trim(data, "\n")
-	//log.Printf("Data: %s", data)
-	//log.Printf("End: %s", end)
 
 	err = json.Unmarshal(data, msg)
 	if err != nil {
@@ -245,6 +243,11 @@ type TupleMsg struct {
 	Contents [][]byte `json:"tuple"`
 }
 
+type RawTupleMsg struct {
+	*TupleMetadata
+	Contents []interface{} `json:"tuple"`
+}
+
 func (this *TupleMsg) AddContent(contentStruct interface{}) {
 	data, err := json.Marshal(contentStruct)
 	if err != nil {
@@ -290,12 +293,12 @@ func (this *boltConnImpl) ReadTuple(contentStructs ...interface{}) (metadata *Tu
 	return tuple.TupleMetadata, nil
 }
 
-func (this *boltConnImpl) ReadRawTuple() (tuple *TupleMsg, err error) {
+func (this *boltConnImpl) ReadRawTuple() (tuple *RawTupleMsg, err error) {
 	if this.context == nil {
 		return nil, errors.New("Attempting to read from uninitialised Storm connection")
 	}
 
-	tuple = &TupleMsg{}
+	tuple = &RawTupleMsg{}
 	err = this.readMsg(tuple)
 	if err != nil {
 		return nil, err
@@ -336,28 +339,24 @@ func (this *boltConnImpl) SendFail(id string) {
 //	"tuple": ["field1", 2, 3]
 //}
 type boltEmission struct {
-	Command  string   `json:"command"`
-	Anchors  []string `json:"anchors"`
-	Stream   string   `json:"stream,omitempty"`
-	Contents [][]byte `json:"tuple"`
+	Command  string        `json:"command"`
+	Anchors  []string      `json:"anchors"`
+	Stream   string        `json:"stream,omitempty"`
+	Contents []interface{} `json:"tuple"`
 }
 
 type boltDirectEmission struct {
-	Command  string   `json:"command"`
-	Anchors  []string `json:"anchors"`
-	Stream   string   `json:"stream,omitempty"`
-	Task     int      `json:"task"`
-	Contents [][]byte `json:"tuple"`
+	Command  string        `json:"command"`
+	Anchors  []string      `json:"anchors"`
+	Stream   string        `json:"stream,omitempty"`
+	Task     int           `json:"task"`
+	Contents []interface{} `json:"tuple"`
 }
 
-func contentsConvert(contents ...interface{}) [][]byte {
-	var contentList [][]byte
+func contentsAppend(contents ...interface{}) []interface{} {
+	var contentList []interface{}
 	for _, content := range contents {
-		data, err := json.Marshal(content)
-		if err != nil {
-			panic(err)
-		}
-		contentList = append(contentList, data)
+		contentList = append(contentList, content)
 	}
 	return contentList
 }
@@ -371,7 +370,7 @@ func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...inte
 		Command:  "emit",
 		Anchors:  anchors,
 		Stream:   stream,
-		Contents: contentsConvert(contents...),
+		Contents: contentsAppend(contents...),
 	}
 	this.sendMsg(emission)
 
@@ -398,7 +397,7 @@ func (this *boltConnImpl) EmitDirect(anchors []string, stream string, directTask
 		Anchors:  anchors,
 		Stream:   stream,
 		Task:     directTask,
-		Contents: contentsConvert(contents...),
+		Contents: contentsAppend(contents...),
 	}
 	this.sendMsg(emission)
 }
@@ -483,18 +482,18 @@ func (this *spoutConnImpl) SendSync() {
 //	"tuple": ["field1", 2, 3]
 //}
 type spoutEmission struct {
-	Command  string   `json:"command"`
-	Id       string   `json:"id"`
-	Stream   string   `json:"stream,omitempty"`
-	Contents [][]byte `json:"tuple"`
+	Command  string        `json:"command"`
+	Id       string        `json:"id"`
+	Stream   string        `json:"stream,omitempty"`
+	Contents []interface{} `json:"tuple"`
 }
 
 type spoutDirectEmission struct {
-	Command  string   `json:"command"`
-	Id       string   `json:"id"`
-	Stream   string   `json:"stream,omitempty"`
-	Task     int      `json:"task"`
-	Contents [][]byte `json:"tuple"`
+	Command  string        `json:"command"`
+	Id       string        `json:"id"`
+	Stream   string        `json:"stream,omitempty"`
+	Task     int           `json:"task"`
+	Contents []interface{} `json:"tuple"`
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,
@@ -511,7 +510,7 @@ func (this *spoutConnImpl) Emit(id string, stream string, contents ...interface{
 		Command:  "emit",
 		Id:       id,
 		Stream:   stream,
-		Contents: contentsConvert(contents...),
+		Contents: contentsAppend(contents...),
 	}
 	this.sendMsg(emission)
 
@@ -540,7 +539,7 @@ func (this *spoutConnImpl) EmitDirect(id string, stream string, directTask int, 
 		Id:       id,
 		Stream:   stream,
 		Task:     directTask,
-		Contents: contentsConvert(contents...),
+		Contents: contentsAppend(contents...),
 	}
 	this.sendMsg(emission)
 }
