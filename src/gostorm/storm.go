@@ -1,4 +1,18 @@
-// GoStorm is a library that allows you to write Storm spouts and bolts in Go 
+//   Copyright 2013 Vastech SA (PTY) LTD
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
+// GoStorm is a library that allows you to write Storm spouts and bolts in Go
 package gostorm
 
 import (
@@ -25,7 +39,7 @@ type BoltConn interface {
 	Initialise(reader io.Reader, writer io.Writer)
 	Log(msg string)
 	ReadTuple(contentStructs ...interface{}) (meta *TupleMetadata, err error)
-	ReadRawTuple() (tuple *RawTupleMsg, err error)
+	ReadRawTuple() (tuple *TupleMsg, err error)
 	SendAck(id string)
 	SendFail(id string)
 	Emit(anchors []string, stream string, content ...interface{}) (taskIds []int)
@@ -241,65 +255,40 @@ func newTupleMsg(id, comp, stream string, task int) *TupleMsg {
 //}
 type TupleMsg struct {
 	*TupleMetadata
-	Contents [][]byte `json:"tuple"`
-}
-
-type RawTupleMsg struct {
-	*TupleMetadata
 	Contents []interface{} `json:"tuple"`
 }
 
-func (this *TupleMsg) AddContent(contentStruct interface{}) {
-	data, err := json.Marshal(contentStruct)
-	if err != nil {
-		panic(err)
-	}
-	this.Contents = append(this.Contents, data)
+func (this *TupleMsg) AddContent(content interface{}) {
+	this.Contents = append(this.Contents, content)
 }
 
-func (this *TupleMsg) Content(index int, contentStruct interface{}) error {
-	err := json.Unmarshal(this.Contents[index], contentStruct)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
-
-// ReadTuple reads a tuple from Storm
-// It ensures that Storm was first initialised. If an input file is
-// used, eof might be returned, which has to be handled by the calling
-// application.
+// ReadTuple reads a tuple from Storm of which the contents are known
+// and decodes the contents into the provided list of structs
 func (this *boltConnImpl) ReadTuple(contentStructs ...interface{}) (metadata *TupleMetadata, err error) {
 	if this.context == nil {
 		return nil, errors.New("Attempting to read from uninitialised Storm connection")
 	}
 
 	tuple := &TupleMsg{}
+	for _, contentStruct := range contentStructs {
+		tuple.AddContent(contentStruct)
+	}
 	err = this.readMsg(tuple)
 	if err != nil {
 		return nil, err
-	}
-	if len(tuple.Contents) != len(contentStructs) {
-		return nil, errors.New("Number of output structs does not match the number of received content objects")
-	}
-
-	for i, contentStruct := range contentStructs {
-		err = tuple.Content(i, contentStruct)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return tuple.TupleMetadata, nil
 }
 
-func (this *boltConnImpl) ReadRawTuple() (tuple *RawTupleMsg, err error) {
+// ReadRawTuple reads a tuple from Storm of which the contents are unknown.
+// Json generic unmarshalling rules will apply to the contents
+func (this *boltConnImpl) ReadRawTuple() (tuple *TupleMsg, err error) {
 	if this.context == nil {
 		return nil, errors.New("Attempting to read from uninitialised Storm connection")
 	}
 
-	tuple = &RawTupleMsg{}
+	tuple = &TupleMsg{}
 	err = this.readMsg(tuple)
 	if err != nil {
 		return nil, err
