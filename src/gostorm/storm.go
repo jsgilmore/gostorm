@@ -1,3 +1,4 @@
+// GoStorm is a library that allows you to write Storm spouts and bolts in Go 
 package gostorm
 
 import (
