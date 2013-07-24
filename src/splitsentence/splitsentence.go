@@ -21,7 +21,7 @@ func handleSigTerm() {
 func emitWords(sentance, id string, boltConn gostorm.BoltConn) {
 	words := strings.Split(sentance, " ")
 	for _, word := range words {
-		boltConn.Emit([]interface{}{word}, []string{id}, "")
+		boltConn.Emit([]string{id}, "", word)
 	}
 }
 
@@ -47,12 +47,13 @@ func main() {
 	boltConn := gostorm.NewBoltConn()
 	boltConn.Initialise()
 
+	var sentence string
 	for {
-		tuple, eof := boltConn.ReadTuple()
+		meta := boltConn.ReadTuple(sentence)
 		if eof {
 			return
 		}
-		emitWords(tuple.Contents[0].(string), tuple.Id, boltConn)
-		boltConn.SendAck(tuple.Id)
+		emitWords(sentence, meta.Id, boltConn)
+		boltConn.SendAck(meta.Id)
 	}
 }
