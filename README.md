@@ -60,7 +60,7 @@ Spout usage
 To create your own Storm spout connection:
 ```go
 spoutConn := storm.NewSpoutConn()
-spoutConn.Initialise()
+spoutConn.Initialise(os.Stdin, os.Stdout)
 ```
 
 Since spouts are synchronous, a spout has to wait for next, ack or fail messages from Storm before it may send messages. After a spout has sent the messages it wishes to send, it has to send a sync message to Storm. The sync message signals that a spout will not send any more messages until the next "next", "ack" or "fail" message is received.
@@ -75,19 +75,17 @@ func (this *mySpoutImpl) Emit(msg interface{}) {
 	
 	switch spoutMsg.Command {
 	case "next":
-		this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
-		this.spoutConn.SendSync()
+		this.spoutConn.Emit(generateId(), "", msg)
   	case "ack":
-    		this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
+    		this.spoutConn.Emit(generateId(), "", msg)
     		handleAck(spoutMsg)
-  		this.spoutConn.SendSync()
   	case "fail":
-    		this.spoutConn.Emit([]interface{}{msg}, generateId(), "")
+    		this.spoutConn.Emit(generateId(), "", msg)
     		handleFail(spoutMsg)
-  		this.spoutConn.SendSync()
 	default:
 		panic("Unknown command received from Storm")
 	}
+	this.spoutConn.SendSync()
 }
 ```
 
