@@ -3,7 +3,9 @@ gostorm
 
 GoStorm is a Go library that implements the communications protocol required for non-Java languages to communicate as part of a storm topology. In other words, gostorm lets you write Storm spouts and bolts in Go.
 
-GoStorm is still an alpha release under active development. That said, GoStorm implements the complete Storm communications protocol as described in https://github.com/nathanmarz/storm/wiki/Multilang-protocol. GoStorm doesn't just implement the Storm communication protocol, but enforces it. It ensures that all functions calls are valid and if invalid function calls are performed, it informs the user of why the call is invalid.
+GoStorm is still an alpha release under active development. That said, GoStorm implements the complete Storm communications protocol as described in https://github.com/nathanmarz/storm/wiki/Multilang-protocol. GoStorm doesn't just implement the Storm communication protocol, but enforces it. It ensures that all function calls are valid and if invalid function calls are performed, it informs the user of why the call is invalid.
+
+GoStorm also correctly handles the asynchronous behaviour of bolts i.t.o. task Ids that might not be delivered directly after an emission.
 
 Currently, the main purpose of GoStorm is to act as a library for Go spouts and bolts that wish to interact with a Storm topology. The topology definition itself should still be done in Java and a shell spout or bolt is still required for each Go spout or bolt. See the storm-starter WordCountTopology on how to do this.
 
@@ -24,8 +26,8 @@ The Initialise function received the configuration from storm and reports your p
 
 In a bolt, you'll usually have something like this:
 ```go
-var msg myStruct
 for {
+	var msg myStruct
   	meta, err := boltConn.ReadTuple(&msg)
 	if err != nil {
 		panic(err)
