@@ -62,12 +62,13 @@ func main() {
 	boltConn.Initialise(os.Stdin, os.Stdout)
 
 	for {
+		var sentence string
 		// We have to read Raw here, since the spout is not json encoding the tuple contents
-		tuple, err := boltConn.ReadRawTuple()
+		meta, err := boltConn.ReadTuple(sentence)
 		if err != nil {
 			panic(err)
 		}
-		emitWords(tuple.Contents[0].(string), tuple.Id, boltConn)
-		boltConn.SendAck(tuple.Id)
+		emitWords(sentence, meta.Id, boltConn)
+		boltConn.SendAck(meta.Id)
 	}
 }

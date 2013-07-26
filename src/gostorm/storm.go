@@ -18,6 +18,7 @@ package gostorm
 import (
 	"bufio"
 	"bytes"
+	"container/list"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -73,22 +74,33 @@ type stormConnImpl struct {
 	context *Context
 }
 
-// readBytes reads data from stdin into the struct provided.
-func (this *stormConnImpl) readMsg(msg interface{}) error {
+func (this *stormConnImpl) readData() (data []byte, err error) {
 	// Read a single json record from the input file
-	data, err := this.reader.ReadBytes('\n')
+	data, err = this.reader.ReadBytes('\n')
 	if err != nil {
-		panic(err)
+		return data, err
 	}
 
 	//Read the end delimiter
 	_, err = this.reader.ReadBytes('\n')
-	if err != nil {
+	if err == io.EOF {
+		panic("EOF received at end statement. Is there newline after every end statement (including the last one)?")
+	} else if err != nil {
 		panic(err)
 	}
 
 	// Remove the newline character
 	data = bytes.Trim(data, "\n")
+	//log.Printf("%s\n", data)
+	return data, nil
+}
+
+// readBytes reads data from stdin into the struct provided.
+func (this *stormConnImpl) readMsg(msg interface{}) error {
+	data, err := this.readData()
+	if err != nil {
+		return err
+	}
 
 	err = json.Unmarshal(data, msg)
 	if err != nil {
@@ -108,32 +120,6 @@ func (this *stormConnImpl) sendMsg(msg interface{}) {
 	fmt.Fprintln(this.writer, "end")
 }
 
-type topologyContext struct {
-	TaskComponent map[string]string `json:"task->component"`
-	TaskId        int               `json:"taskid"`
-}
-
-//{
-//    "conf": {
-//        "topology.message.timeout.secs": 3,
-//        // etc
-//    },
-//    "context": {
-//        "task->component": {
-//            "1": "example-spout",
-//            "2": "__acker",
-//            "3": "example-bolt"
-//        },
-//        "taskid": 3
-//    },
-//    "pidDir": "..."
-//}
-type Context struct {
-	Conf     map[string]interface{} `json:"conf"`
-	Topology topologyContext        `json:"context"`
-	PidDir   string                 `json:"pidDir"`
-}
-
 func (this *stormConnImpl) readContext() (context *Context, err error) {
 	context = &Context{}
 	err = this.readMsg(context)
@@ -141,11 +127,6 @@ func (this *stormConnImpl) readContext() (context *Context, err error) {
 		return nil, err
 	}
 	return context, nil
-}
-
-// {"pid": 1234}
-type pidMsg struct {
-	Pid int `json:"pid"`
 }
 
 func (this *stormConnImpl) reportPid() {
@@ -182,16 +163,6 @@ func (this *stormConnImpl) Initialise(reader io.Reader, writer io.Writer) {
 	this.reportPid()
 }
 
-//{
-//	"command": "log",
-//	// the message to log
-//	"msg": "hello world!"
-//}
-type logMsg struct {
-	Command string `json:"command"`
-	Msg     string `json:"msg"`
-}
-
 // Log sends a log message that will be logged by Storm
 func (this *stormConnImpl) Log(text string) {
 	msg := logMsg{
@@ -209,12 +180,14 @@ func (this *stormConnImpl) Log(text string) {
 func NewBoltConn() BoltConn {
 	boltConn := &boltConnImpl{
 		stormConnImpl: newStormConn(bolt),
+		tupleBuffer:   list.New(),
 	}
 	return boltConn
 }
 
 type boltConnImpl struct {
 	*stormConnImpl
+	tupleBuffer *list.List
 }
 
 func newTupleMetadata(id, comp, stream string, task int) *TupleMetadata {
@@ -227,39 +200,46 @@ func newTupleMetadata(id, comp, stream string, task int) *TupleMetadata {
 	return meta
 }
 
-type TupleMetadata struct {
-	Id     string `json:"id"`
-	Comp   string `json:"comp"`
-	Stream string `json:"stream"`
-	Task   int    `json:"task"`
-}
-
-func newTupleMsg(id, comp, stream string, task int) *TupleMsg {
-	msg := &TupleMsg{
-		TupleMetadata: newTupleMetadata(id, comp, stream, task),
+// readBytes reads data from stdin into the struct provided.
+func (this *boltConnImpl) readMsg(msg interface{}) (err error) {
+	var data []byte
+	// Read data from the tuple buffer
+	if this.tupleBuffer.Len() > 0 {
+		e := this.tupleBuffer.Front()
+		data = this.tupleBuffer.Remove(e).([]byte)
+		// if the tuple buffer is empty, read data from storm
+	} else {
+		data, err = this.readData()
+		if err != nil {
+			return err
+		}
 	}
-	return msg
+
+	err = json.Unmarshal(data, msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-//{
-//    // The tuple's id - this is a string to support languages lacking 64-bit precision
-//	"id": "-6955786537413359385",
-//	// The id of the component that created this tuple
-//	"comp": "1",
-//	// The id of the stream this tuple was emitted to
-//	"stream": "1",
-//	// The id of the task that created this tuple
-//	"task": 9,
-//	// All the values in this tuple
-//	"tuple": ["snow white and the seven dwarfs", "field2", 3]
-//}
-type TupleMsg struct {
-	*TupleMetadata
-	Contents []interface{} `json:"tuple"`
-}
+func (this *boltConnImpl) readTaskIds() (taskIds []int) {
+	// Read a single json record from the input file
+	data, err := this.readData()
+	if err != nil {
+		panic(err)
+	}
 
-func (this *TupleMsg) AddContent(content interface{}) {
-	this.Contents = append(this.Contents, content)
+	// If we didn't receive a json array, treat it as a tuple instead
+	if data[0] != '[' {
+		this.tupleBuffer.PushBack(data)
+		return this.readTaskIds()
+	}
+
+	err = json.Unmarshal(data, &taskIds)
+	if err != nil {
+		panic(err)
+	}
+	return taskIds
 }
 
 // ReadTuple reads a tuple from Storm of which the contents are known
@@ -317,32 +297,6 @@ func (this *boltConnImpl) SendFail(id string) {
 	this.sendMsg(msg)
 }
 
-//{
-//	"command": "emit",
-//	// The ids of the tuples this output tuples should be anchored to
-//	"anchors": ["1231231", "-234234234"],
-//	// The id of the stream this tuple was emitted to. Leave this empty to emit to default stream.
-//	"stream": "1",
-//	// If doing an emit direct, indicate the task to send the tuple to
-//	"task": 9,
-//	// All the values in this tuple
-//	"tuple": ["field1", 2, 3]
-//}
-type boltEmission struct {
-	Command  string        `json:"command"`
-	Anchors  []string      `json:"anchors"`
-	Stream   string        `json:"stream,omitempty"`
-	Contents []interface{} `json:"tuple"`
-}
-
-type boltDirectEmission struct {
-	Command  string        `json:"command"`
-	Anchors  []string      `json:"anchors"`
-	Stream   string        `json:"stream,omitempty"`
-	Task     int           `json:"task"`
-	Contents []interface{} `json:"tuple"`
-}
-
 func contentsAppend(contents ...interface{}) []interface{} {
 	var contentList []interface{}
 	for _, content := range contents {
@@ -364,14 +318,7 @@ func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...inte
 	}
 	this.sendMsg(emission)
 
-	// Bolt are asynchronous, so we might not receive a list of
-	// taskIds here, but another tuple for processing instead.
-	// Lets fix that when it happens
-	err := this.readMsg(&taskIds)
-	if err != nil {
-		panic(err)
-	}
-	return taskIds
+	return this.readTaskIds()
 }
 
 // EmitDirect emits a tuple with the given array of interface{}s as values,
@@ -408,15 +355,6 @@ type spoutConnImpl struct {
 	readyToSend bool
 	tuplesSent  bool
 	*stormConnImpl
-}
-
-// {"command": "next"}
-// {"command": "sync"}
-// {"command": "ack", "id": "1231231"}
-// {"command": "fail", "id": "1231231"}
-type spoutMsg struct {
-	Command string `json:"command"`
-	Id      string `json:"id,omitempty"`
 }
 
 // ReadMsg reads a message from Storm.
@@ -459,33 +397,6 @@ func (this *spoutConnImpl) SendSync() {
 	this.sendMsg(msg)
 }
 
-//{
-//	"command": "emit",
-//	// The id for the tuple. Leave this out for an unreliable emit. The id can
-//    // be a string or a number.
-//	"id": "1231231",
-//	// The id of the stream this tuple was emitted to. Leave this empty to emit to default stream.
-//	"stream": "1",
-//	// If doing an emit direct, indicate the task to send the tuple to
-//	"task": 9,
-//	// All the values in this tuple
-//	"tuple": ["field1", 2, 3]
-//}
-type spoutEmission struct {
-	Command  string        `json:"command"`
-	Id       string        `json:"id"`
-	Stream   string        `json:"stream,omitempty"`
-	Contents []interface{} `json:"tuple"`
-}
-
-type spoutDirectEmission struct {
-	Command  string        `json:"command"`
-	Id       string        `json:"id"`
-	Stream   string        `json:"stream,omitempty"`
-	Task     int           `json:"task"`
-	Contents []interface{} `json:"tuple"`
-}
-
 // Emit emits a tuple with the given array of interface{}s as values,
 // with the given taskId, sent out on the given stream.
 // A stream value of "" or "default" can be used to denote the default stream
@@ -506,6 +417,7 @@ func (this *spoutConnImpl) Emit(id string, stream string, contents ...interface{
 
 	// Upon an indirect emit, storm replies with a list of chosen destination task Ids
 	err := this.readMsg(&taskIds)
+	// EOF is only an issue when using test files
 	if err != nil {
 		panic(err)
 	}
