@@ -21,7 +21,7 @@ type topologyContext struct {
 	TaskId        int               `json:"taskid"`
 }
 
-//{
+//  {
 //    "conf": {
 //        "topology.message.timeout.secs": 3,
 //        // etc
@@ -35,7 +35,7 @@ type topologyContext struct {
 //        "taskid": 3
 //    },
 //    "pidDir": "..."
-//}
+//  }
 type Context struct {
 	Conf     map[string]interface{} `json:"conf"`
 	Topology topologyContext        `json:"context"`
@@ -47,11 +47,11 @@ type pidMsg struct {
 	Pid int `json:"pid"`
 }
 
-//{
+//  {
 //	"command": "log",
 //	// the message to log
 //	"msg": "hello world!"
-//}
+//  }
 type logMsg struct {
 	Command string `json:"command"`
 	Msg     string `json:"msg"`
@@ -71,7 +71,7 @@ func newTupleMsg(id, comp, stream string, task int) *TupleMsg {
 	return msg
 }
 
-//{
+//  {
 //    // The tuple's id - this is a string to support languages lacking 64-bit precision
 //	"id": "-6955786537413359385",
 //	// The id of the component that created this tuple
@@ -82,7 +82,7 @@ func newTupleMsg(id, comp, stream string, task int) *TupleMsg {
 //	"task": 9,
 //	// All the values in this tuple
 //	"tuple": ["snow white and the seven dwarfs", "field2", 3]
-//}
+//  }
 type TupleMsg struct {
 	*TupleMetadata
 	Contents []interface{} `json:"tuple"`
@@ -92,7 +92,7 @@ func (this *TupleMsg) AddContent(content interface{}) {
 	this.Contents = append(this.Contents, content)
 }
 
-//{
+//  {
 //	"command": "emit",
 //	// The ids of the tuples this output tuples should be anchored to
 //	"anchors": ["1231231", "-234234234"],
@@ -102,7 +102,7 @@ func (this *TupleMsg) AddContent(content interface{}) {
 //	"task": 9,
 //	// All the values in this tuple
 //	"tuple": ["field1", 2, 3]
-//}
+//  }
 type boltEmission struct {
 	Command  string        `json:"command"`
 	Anchors  []string      `json:"anchors"`
@@ -127,7 +127,7 @@ type spoutMsg struct {
 	Id      string `json:"id,omitempty"`
 }
 
-//{
+//  {
 //	"command": "emit",
 //	// The id for the tuple. Leave this out for an unreliable emit. The id can
 //    // be a string or a number.
@@ -138,7 +138,7 @@ type spoutMsg struct {
 //	"task": 9,
 //	// All the values in this tuple
 //	"tuple": ["field1", 2, 3]
-//}
+//  }
 type spoutEmission struct {
 	Command  string        `json:"command"`
 	Id       string        `json:"id"`
