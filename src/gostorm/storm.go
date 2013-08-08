@@ -23,9 +23,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 type mode int
@@ -38,6 +38,7 @@ const (
 // BoltConn is the interface that implements the possible bolt actions
 type BoltConn interface {
 	Initialise(reader io.Reader, writer io.Writer)
+	Context() *Context
 	Log(msg string)
 	ReadTuple(contentStructs ...interface{}) (meta *TupleMetadata, err error)
 	ReadRawTuple() (tuple *TupleMsg, err error)
@@ -50,6 +51,7 @@ type BoltConn interface {
 // SpoutConn is the interface that implements the possible spout actions
 type SpoutConn interface {
 	Initialise(reader io.Reader, writer io.Writer)
+	Context() *Context
 	Log(msg string)
 	ReadMsg() (msg *spoutMsg, err error)
 	SendSync()
@@ -91,7 +93,6 @@ func (this *stormConnImpl) readData() (data []byte, err error) {
 
 	// Remove the newline character
 	data = bytes.Trim(data, "\n")
-	//log.Printf("%s\n", data)
 	return data, nil
 }
 
@@ -99,9 +100,11 @@ func (this *stormConnImpl) readData() (data []byte, err error) {
 func (this *stormConnImpl) readMsg(msg interface{}) error {
 	data, err := this.readData()
 	if err != nil {
+		log.Printf("Invalid data: %s\n", data)
 		return err
 	}
 
+	//log.Printf("Data: %s\n", data)
 	err = json.Unmarshal(data, msg)
 	if err != nil {
 		return err
@@ -116,6 +119,13 @@ func (this *stormConnImpl) sendMsg(msg interface{}) {
 		panic(err)
 	}
 	fmt.Fprintln(this.writer, string(data))
+	// Storm requires that every message be suffixed with an "end" string
+	fmt.Fprintln(this.writer, "end")
+}
+
+// sendMsg sends the contents of a known Storm message to Storm
+func (this *stormConnImpl) sendEncoded(msg string) {
+	fmt.Fprintln(this.writer, msg)
 	// Storm requires that every message be suffixed with an "end" string
 	fmt.Fprintln(this.writer, "end")
 }
@@ -161,6 +171,10 @@ func (this *stormConnImpl) Initialise(reader io.Reader, writer io.Writer) {
 	}
 
 	this.reportPid()
+}
+
+func (this *stormConnImpl) Context() *Context {
+	return this.context
 }
 
 // Log sends a log message that will be logged by Storm
@@ -280,21 +294,13 @@ func (this *boltConnImpl) ReadRawTuple() (tuple *TupleMsg, err error) {
 // SendAck has to be called after an emission anchored to the acked id,
 // otherwise Storm will report an error.
 func (this *boltConnImpl) SendAck(id string) {
-	msg := &spoutMsg{
-		Command: "ack",
-		Id:      id,
-	}
-	this.sendMsg(msg)
+	this.sendEncoded(fmt.Sprintf(`{"command": "ack", "id": "%s"}`, id))
 }
 
 // SendFail reports that the message with the given Id failed
 // No emission should be anchored to a failed message Id
 func (this *boltConnImpl) SendFail(id string) {
-	msg := &spoutMsg{
-		Command: "fail",
-		Id:      id,
-	}
-	this.sendMsg(msg)
+	this.sendEncoded(fmt.Sprintf(`{"command": "fail", "id": "%s"}`, id))
 }
 
 func contentsAppend(contents ...interface{}) []interface{} {
@@ -317,7 +323,6 @@ func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...inte
 		Contents: contentsAppend(contents...),
 	}
 	this.sendMsg(emission)
-
 	return this.readTaskIds()
 }
 
@@ -353,7 +358,6 @@ func NewSpoutConn() SpoutConn {
 
 type spoutConnImpl struct {
 	readyToSend bool
-	tuplesSent  bool
 	*stormConnImpl
 }
 
@@ -371,9 +375,6 @@ func (this *spoutConnImpl) ReadMsg() (msg *spoutMsg, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if msg.Command == "next" {
-		this.tuplesSent = false
-	}
 	return msg, nil
 }
 
@@ -383,18 +384,7 @@ func (this *spoutConnImpl) ReadMsg() (msg *spoutMsg, err error) {
 // enforce the synchronous behaviour of a spout as required by Storm.
 func (this *spoutConnImpl) SendSync() {
 	this.readyToSend = false
-	// Storm requires that a spout sleeps for "a small amount of
-	// time" after receiving next, before sending sync, if no
-	// tuples were emitted. We sleep for 1 millisecond, the same
-	// as ISpout's default wait strategy
-	if !this.tuplesSent {
-		time.Sleep(time.Millisecond)
-	}
-
-	msg := &spoutMsg{
-		Command: "sync",
-	}
-	this.sendMsg(msg)
+	this.sendEncoded(`{"command": "sync"}`)
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,
@@ -405,7 +395,6 @@ func (this *spoutConnImpl) Emit(id string, stream string, contents ...interface{
 	if !this.readyToSend {
 		panic("Spout not ready to send")
 	}
-	this.tuplesSent = true
 
 	emission := spoutEmission{
 		Command:  "emit",
@@ -434,7 +423,6 @@ func (this *spoutConnImpl) EmitDirect(id string, stream string, directTask int, 
 	if !this.readyToSend {
 		panic("Spout not ready to send")
 	}
-	this.tuplesSent = true
 
 	emission := spoutDirectEmission{
 		Command:  "emit",

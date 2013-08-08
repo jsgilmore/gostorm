@@ -61,18 +61,18 @@ func genTaskIdsMsg() (taskIds []int) {
 	return taskIds
 }
 
-func writeMsg(msg interface{}, writer io.Writer) {
+func writeMsg(msg interface{}, writer io.Writer, t *testing.T) {
 	data, err := json.Marshal(msg)
-	checkErr(err)
+	checkErr(err, t)
 	_, err = writer.Write(data)
-	checkErr(err)
+	checkErr(err, t)
 	_, err = writer.Write([]byte("\nend\n"))
-	checkErr(err)
+	checkErr(err, t)
 }
 
-func feedConf(buffer io.Writer) {
+func feedConf(buffer io.Writer, t *testing.T) {
 	_, err := buffer.Write(conf)
-	checkErr(err)
+	checkErr(err, t)
 }
 
 func msgCheck(given, expected string, t *testing.T) {
@@ -106,46 +106,38 @@ func metaCheck(given, expected *TupleMetadata, t *testing.T) {
 	}
 }
 
-func checkErr(err error) {
+func checkErr(err error, t *testing.T) {
 	if err != nil {
-		panic(err)
+		t.Error(err)
 	}
 }
 
 func checkPidFile(t *testing.T) {
 	pidFilename := fmt.Sprintf("%d", os.Getpid())
 	err := os.Remove(pidFilename)
-	if err != nil {
-		t.Error(err)
+	checkErr(err, t)
+}
+
+func expect(expected string, buffer *bytes.Buffer, t *testing.T) {
+	// Check whether the pid was reported
+	recv, err := buffer.ReadString('\n')
+	checkErr(err, t)
+	if recv != expected+"\n" {
+		t.Errorf("Expected: %s, received: %s", recv, expected)
 	}
 }
 
 func TestInit(t *testing.T) {
 	inBuffer := bytes.NewBuffer(nil)
-	feedConf(inBuffer)
+	feedConf(inBuffer, t)
 
 	outBuffer := bytes.NewBuffer(nil)
 
 	boltConn := NewBoltConn()
 	boltConn.Initialise(inBuffer, outBuffer)
 
-	// Check whether the pid was reported
-	pid, err := outBuffer.ReadString('\n')
-	if err != nil {
-		panic(err)
-	}
-	if pid != fmt.Sprintf("{\"pid\":%d}\n", os.Getpid()) {
-		t.Error("Pid not correctly reported")
-	}
-
-	// Check whether "end" was appended to the message
-	end, err := outBuffer.ReadString('\n')
-	if err != nil {
-		panic(err)
-	}
-	if end != "end\n" {
-		t.Error("End not correctly appended")
-	}
+	expect(fmt.Sprintf(`{"pid":%d}`, os.Getpid()), outBuffer, t)
+	expect("end", outBuffer, t)
 
 	// Check whether the pid file was created
 	checkPidFile(t)
@@ -155,20 +147,20 @@ func TestLog(t *testing.T) {
 
 }
 
-func feedReadTuple(buffer io.Writer) {
-	feedConf(buffer)
-	writeMsg(testTupleMsg(0), buffer)
-	writeMsg(testTupleMsg(1), buffer)
-	writeMsg(testTupleMsg(2), buffer)
-	writeMsg(testTupleMsg(3), buffer)
-	writeMsg(testTupleMsg(4), buffer)
-	writeMsg(testTupleMsg(5), buffer)
+func feedReadTuple(buffer io.Writer, t *testing.T) {
+	feedConf(buffer, t)
+	writeMsg(testTupleMsg(0), buffer, t)
+	writeMsg(testTupleMsg(1), buffer, t)
+	writeMsg(testTupleMsg(2), buffer, t)
+	writeMsg(testTupleMsg(3), buffer, t)
+	writeMsg(testTupleMsg(4), buffer, t)
+	writeMsg(testTupleMsg(5), buffer, t)
 }
 
 func TestReadTuple(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 
-	feedReadTuple(buffer)
+	feedReadTuple(buffer, t)
 
 	boltConn := NewBoltConn()
 	boltConn.Initialise(buffer, os.Stdout)
@@ -176,7 +168,7 @@ func TestReadTuple(t *testing.T) {
 	var msg string
 	for i := 0; i < 6; i++ {
 		meta, err := boltConn.ReadTuple(&msg)
-		checkErr(err)
+		checkErr(err, t)
 		msgCheck(msg, contents[i], t)
 		metaTest(meta, i, t)
 	}
@@ -189,44 +181,91 @@ func TestReadRawTuple(t *testing.T) {
 }
 
 func TestSendAck(t *testing.T) {
+	inBuffer := bytes.NewBuffer(nil)
+	feedConf(inBuffer, t)
 
+	outBuffer := bytes.NewBuffer(nil)
+
+	boltConn := NewBoltConn()
+	boltConn.Initialise(inBuffer, outBuffer)
+
+	var ids []string
+	for i := 0; i < 1000; i++ {
+		id := fmt.Sprintf("%d", rand.Int63())
+		ids = append(ids, id)
+
+		boltConn.SendAck(id)
+	}
+
+	expect(fmt.Sprintf(`{"pid":%d}`, os.Getpid()), outBuffer, t)
+	expect("end", outBuffer, t)
+
+	for i := 0; i < 1000; i++ {
+		expect(fmt.Sprintf(`{"command": "ack", "id": "%s"}`, ids[i]), outBuffer, t)
+		expect("end", outBuffer, t)
+	}
+	checkPidFile(t)
 }
 
 func TestSendFail(t *testing.T) {
+	inBuffer := bytes.NewBuffer(nil)
+	feedConf(inBuffer, t)
 
+	outBuffer := bytes.NewBuffer(nil)
+
+	boltConn := NewBoltConn()
+	boltConn.Initialise(inBuffer, outBuffer)
+
+	var ids []string
+	for i := 0; i < 1000; i++ {
+		id := fmt.Sprintf("%d", rand.Int63())
+		ids = append(ids, id)
+
+		boltConn.SendFail(id)
+	}
+
+	expect(fmt.Sprintf(`{"pid":%d}`, os.Getpid()), outBuffer, t)
+	expect("end", outBuffer, t)
+
+	for i := 0; i < 1000; i++ {
+		expect(fmt.Sprintf(`{"command": "fail", "id": "%s"}`, ids[i]), outBuffer, t)
+		expect("end", outBuffer, t)
+	}
+
+	checkPidFile(t)
 }
 
-func feedBoltSync(inBuffer io.Writer) (taskIdsList [][]int) {
-	feedConf(inBuffer)
-	writeMsg(testTupleMsg(0), inBuffer)
+func feedBoltSync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int) {
+	feedConf(inBuffer, t)
+	writeMsg(testTupleMsg(0), inBuffer, t)
 	taskIds := genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(1), inBuffer)
+	writeMsg(testTupleMsg(1), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(2), inBuffer)
+	writeMsg(testTupleMsg(2), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(3), inBuffer)
+	writeMsg(testTupleMsg(3), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(4), inBuffer)
+	writeMsg(testTupleMsg(4), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(5), inBuffer)
+	writeMsg(testTupleMsg(5), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 	return
 }
 
@@ -237,7 +276,7 @@ func testBoltEmit(taskIdsList [][]int, inBuffer io.Reader, t *testing.T) {
 	var msg string
 	for i := 0; i < 6; i++ {
 		meta, err := boltConn.ReadTuple(&msg)
-		checkErr(err)
+		checkErr(err, t)
 		msgCheck(msg, contents[i], t)
 		metaTest(meta, i, t)
 
@@ -257,7 +296,7 @@ func testBoltEmit(taskIdsList [][]int, inBuffer io.Reader, t *testing.T) {
 
 func TestBoltSyncEmit(t *testing.T) {
 	inBuffer := bytes.NewBuffer(nil)
-	taskIdsList := feedBoltSync(inBuffer)
+	taskIdsList := feedBoltSync(inBuffer, t)
 	testBoltEmit(taskIdsList, inBuffer, t)
 }
 
@@ -265,42 +304,42 @@ func TestBoltEmitDirect(t *testing.T) {
 
 }
 
-func feedBoltAsync(inBuffer io.Writer) (taskIdsList [][]int) {
+func feedBoltAsync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int) {
 	// Send messages and task Ids in an asynchronous way
-	feedConf(inBuffer)
-	writeMsg(testTupleMsg(0), inBuffer)
-	writeMsg(testTupleMsg(1), inBuffer)
+	feedConf(inBuffer, t)
+	writeMsg(testTupleMsg(0), inBuffer, t)
+	writeMsg(testTupleMsg(1), inBuffer, t)
 
 	taskIds := genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(2), inBuffer)
-	writeMsg(testTupleMsg(3), inBuffer)
-	writeMsg(testTupleMsg(4), inBuffer)
-	writeMsg(testTupleMsg(5), inBuffer)
+	writeMsg(testTupleMsg(2), inBuffer, t)
+	writeMsg(testTupleMsg(3), inBuffer, t)
+	writeMsg(testTupleMsg(4), inBuffer, t)
+	writeMsg(testTupleMsg(5), inBuffer, t)
 
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
-	writeMsg(taskIds, inBuffer)
+	writeMsg(taskIds, inBuffer, t)
 	return
 }
 
 func TestBoltAsyncEmit(t *testing.T) {
 	inBuffer := bytes.NewBuffer(nil)
-	taskIdsList := feedBoltAsync(inBuffer)
+	taskIdsList := feedBoltAsync(inBuffer, t)
 	testBoltEmit(taskIdsList, inBuffer, t)
 }
 
@@ -317,5 +356,4 @@ func TestSpoutEmitDirect(t *testing.T) {
 }
 
 func TestSendSync(t *testing.T) {
-
 }
