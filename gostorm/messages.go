@@ -21,6 +21,7 @@ type topologyContext struct {
 	TaskId        int               `json:"taskid"`
 }
 
+// Multilang message definition:
 //  {
 //    "conf": {
 //        "topology.message.timeout.secs": 3,
@@ -42,11 +43,13 @@ type Context struct {
 	PidDir   string                 `json:"pidDir"`
 }
 
+// Multilang message definition:
 // {"pid": 1234}
 type pidMsg struct {
 	Pid int `json:"pid"`
 }
 
+// Multilang message definition:
 //  {
 //	"command": "log",
 //	// the message to log
@@ -71,6 +74,7 @@ func newTupleMsg(id, comp, stream string, task int) *TupleMsg {
 	return msg
 }
 
+// Multilang message definition:
 //  {
 //    // The tuple's id - this is a string to support languages lacking 64-bit precision
 //	"id": "-6955786537413359385",
@@ -92,6 +96,7 @@ func (this *TupleMsg) AddContent(content interface{}) {
 	this.Contents = append(this.Contents, content)
 }
 
+// Multilang message definition:
 //  {
 //	"command": "emit",
 //	// The ids of the tuples this output tuples should be anchored to
@@ -118,6 +123,7 @@ type boltDirectEmission struct {
 	Contents []interface{} `json:"tuple"`
 }
 
+// Multilang message definitions:
 // {"command": "next"}
 // {"command": "sync"}
 // {"command": "ack", "id": "1231231"}
@@ -127,6 +133,7 @@ type spoutMsg struct {
 	Id      string `json:"id,omitempty"`
 }
 
+// Multilang message definition:
 //  {
 //	"command": "emit",
 //	// The id for the tuple. Leave this out for an unreliable emit. The id can
