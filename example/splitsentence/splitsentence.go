@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"gostorm"
+	"github.com/jsgilmore/gostorm"
 	"log"
 	"os"
 	"os/signal"
