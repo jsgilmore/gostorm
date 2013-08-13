@@ -14,8 +14,6 @@
 
 package gostorm
 
-import ()
-
 type topologyContext struct {
 	TaskComponent map[string]string `json:"task->component"`
 	TaskId        int               `json:"taskid"`
