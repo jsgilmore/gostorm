@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	stormjson "github.com/jsgilmore/gostorm/encoding/json"
 	"io"
 	"math/rand"
 	"os"
@@ -46,7 +47,7 @@ var (
 
 func genTupleMsg(id string, content interface{}) *TupleMsg {
 	msg := newTupleMsg(id, "spout", "default", 4)
-	msg.AddContent(content)
+	msg.Contents = append(msg.Contents, content)
 	return msg
 }
 
@@ -133,8 +134,10 @@ func TestInit(t *testing.T) {
 
 	outBuffer := bytes.NewBuffer(nil)
 
-	boltConn := NewBoltConn()
-	boltConn.Initialise(inBuffer, outBuffer)
+	input := stormjson.NewJsonObjectInput(inBuffer)
+	output := stormjson.NewJsonObjectOutput(outBuffer)
+	boltConn := NewBoltConn(input, output)
+	boltConn.Initialise()
 
 	expect(fmt.Sprintf(`{"pid":%d}`, os.Getpid()), outBuffer, t)
 	expect("end", outBuffer, t)
@@ -162,8 +165,10 @@ func TestReadTuple(t *testing.T) {
 
 	feedReadTuple(buffer, t)
 
-	boltConn := NewBoltConn()
-	boltConn.Initialise(buffer, os.Stdout)
+	input := stormjson.NewJsonObjectInput(buffer)
+	output := stormjson.NewJsonObjectOutput(os.Stdout)
+	boltConn := NewBoltConn(input, output)
+	boltConn.Initialise()
 
 	var msg string
 	for i := 0; i < 6; i++ {
@@ -186,8 +191,10 @@ func TestSendAck(t *testing.T) {
 
 	outBuffer := bytes.NewBuffer(nil)
 
-	boltConn := NewBoltConn()
-	boltConn.Initialise(inBuffer, outBuffer)
+	input := stormjson.NewJsonObjectInput(inBuffer)
+	output := stormjson.NewJsonObjectOutput(outBuffer)
+	boltConn := NewBoltConn(input, output)
+	boltConn.Initialise()
 
 	var ids []string
 	for i := 0; i < 1000; i++ {
@@ -213,8 +220,10 @@ func TestSendFail(t *testing.T) {
 
 	outBuffer := bytes.NewBuffer(nil)
 
-	boltConn := NewBoltConn()
-	boltConn.Initialise(inBuffer, outBuffer)
+	input := stormjson.NewJsonObjectInput(inBuffer)
+	output := stormjson.NewJsonObjectOutput(outBuffer)
+	boltConn := NewBoltConn(input, output)
+	boltConn.Initialise()
 
 	var ids []string
 	for i := 0; i < 1000; i++ {
@@ -270,8 +279,10 @@ func feedBoltSync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int) {
 }
 
 func testBoltEmit(taskIdsList [][]int, inBuffer io.Reader, t *testing.T) {
-	boltConn := NewBoltConn()
-	boltConn.Initialise(inBuffer, os.Stdout)
+	input := stormjson.NewJsonObjectInput(inBuffer)
+	output := stormjson.NewJsonObjectOutput(os.Stdout)
+	boltConn := NewBoltConn(input, output)
+	boltConn.Initialise()
 
 	var msg string
 	for i := 0; i < 6; i++ {

@@ -16,32 +16,19 @@
 package gostorm
 
 import (
-	"bufio"
-	"bytes"
-	"container/list"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"log"
+	"github.com/jsgilmore/gostorm/encoding"
 	"os"
 	"strconv"
 )
 
-type mode int
-
-const (
-	spout mode = iota
-	bolt
-)
-
 // BoltConn is the interface that implements the possible bolt actions
 type BoltConn interface {
-	Initialise(reader io.Reader, writer io.Writer)
+	Initialise()
 	Context() *Context
 	Log(msg string)
 	ReadTuple(contentStructs ...interface{}) (meta *TupleMetadata, err error)
-	ReadRawTuple() (tuple *TupleMsg, err error)
 	SendAck(id string)
 	SendFail(id string)
 	Emit(anchors []string, stream string, content ...interface{}) (taskIds []int)
@@ -50,10 +37,10 @@ type BoltConn interface {
 
 // SpoutConn is the interface that implements the possible spout actions
 type SpoutConn interface {
-	Initialise(reader io.Reader, writer io.Writer)
+	Initialise()
 	Context() *Context
 	Log(msg string)
-	ReadMsg() (msg *spoutMsg, err error)
+	ReadSpoutMsg() (msg *spoutMsg, err error)
 	SendSync()
 	Emit(id string, stream string, contents ...interface{}) (taskIds []int)
 	EmitDirect(id string, stream string, directTask int, contents ...interface{})
@@ -61,78 +48,24 @@ type SpoutConn interface {
 
 // newStormConn creates a new generic Storm connection
 // This connection must be embedded in either a spout or bolt
-func newStormConn(mode mode) *stormConnImpl {
+func newStormConn(in encoding.Input, out encoding.Output) *stormConnImpl {
 	stormConn := &stormConnImpl{
-		mode: mode,
+		Input:  in,
+		Output: out,
 	}
 	return stormConn
 }
 
 // stormConnImpl represents the common functions that both a bolt and spout are capable of
 type stormConnImpl struct {
-	mode    mode
-	reader  *bufio.Reader
-	writer  io.Writer
+	encoding.Input
+	encoding.Output
 	context *Context
-}
-
-func (this *stormConnImpl) readData() (data []byte, err error) {
-	// Read a single json record from the input file
-	data, err = this.reader.ReadBytes('\n')
-	if err != nil {
-		return data, err
-	}
-
-	//Read the end delimiter
-	_, err = this.reader.ReadBytes('\n')
-	if err == io.EOF {
-		panic("EOF received at end statement. Is there newline after every end statement (including the last one)?")
-	} else if err != nil {
-		panic(err)
-	}
-
-	// Remove the newline character
-	data = bytes.Trim(data, "\n")
-	return data, nil
-}
-
-// readBytes reads data from stdin into the struct provided.
-func (this *stormConnImpl) readMsg(msg interface{}) error {
-	data, err := this.readData()
-	if err != nil {
-		log.Printf("Invalid data: %s\n", data)
-		return err
-	}
-
-	//log.Printf("Data: %s\n", data)
-	err = json.Unmarshal(data, msg)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// sendMsg sends the contents of a known Storm message to Storm
-func (this *stormConnImpl) sendMsg(msg interface{}) {
-	data, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Fprintln(this.writer, string(data))
-	// Storm requires that every message be suffixed with an "end" string
-	fmt.Fprintln(this.writer, "end")
-}
-
-// sendMsg sends the contents of a known Storm message to Storm
-func (this *stormConnImpl) sendEncoded(msg string) {
-	fmt.Fprintln(this.writer, msg)
-	// Storm requires that every message be suffixed with an "end" string
-	fmt.Fprintln(this.writer, "end")
 }
 
 func (this *stormConnImpl) readContext() (context *Context, err error) {
 	context = &Context{}
-	err = this.readMsg(context)
+	err = this.ReadMsg(context)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +76,7 @@ func (this *stormConnImpl) reportPid() {
 	msg := pidMsg{
 		Pid: os.Getpid(),
 	}
-	this.sendMsg(msg)
+	this.SendMsg(msg)
 
 	pidDir := this.context.PidDir
 	if len(pidDir) > 0 {
@@ -160,9 +93,7 @@ func (this *stormConnImpl) reportPid() {
 // Initialise set the storm input reader to the specified file
 // descriptor, reads the topology configuration for Storm and reports
 // the pid to Storm
-func (this *stormConnImpl) Initialise(reader io.Reader, writer io.Writer) {
-	this.reader = bufio.NewReader(reader)
-	this.writer = writer
+func (this *stormConnImpl) Initialise() {
 	// Receive the topology config for this storm connection
 	var err error
 	this.context, err = this.readContext()
@@ -183,7 +114,7 @@ func (this *stormConnImpl) Log(text string) {
 		Command: "log",
 		Msg:     text,
 	}
-	this.sendMsg(msg)
+	this.SendMsg(msg)
 }
 
 //-------------------------------------------------------------------
@@ -191,17 +122,15 @@ func (this *stormConnImpl) Log(text string) {
 //-------------------------------------------------------------------
 
 // NewBoltConn returns a Storm bolt connection that a Go bolt can use to communicate with Storm
-func NewBoltConn() BoltConn {
+func NewBoltConn(in encoding.Input, out encoding.Output) BoltConn {
 	boltConn := &boltConnImpl{
-		stormConnImpl: newStormConn(bolt),
-		tupleBuffer:   list.New(),
+		stormConnImpl: newStormConn(in, out),
 	}
 	return boltConn
 }
 
 type boltConnImpl struct {
 	*stormConnImpl
-	tupleBuffer *list.List
 }
 
 func newTupleMetadata(id, comp, stream string, task int) *TupleMetadata {
@@ -214,48 +143,6 @@ func newTupleMetadata(id, comp, stream string, task int) *TupleMetadata {
 	return meta
 }
 
-// readBytes reads data from stdin into the struct provided.
-func (this *boltConnImpl) readMsg(msg interface{}) (err error) {
-	var data []byte
-	// Read data from the tuple buffer
-	if this.tupleBuffer.Len() > 0 {
-		e := this.tupleBuffer.Front()
-		data = this.tupleBuffer.Remove(e).([]byte)
-		// if the tuple buffer is empty, read data from storm
-	} else {
-		data, err = this.readData()
-		if err != nil {
-			return err
-		}
-	}
-
-	err = json.Unmarshal(data, msg)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (this *boltConnImpl) readTaskIds() (taskIds []int) {
-	// Read a single json record from the input file
-	data, err := this.readData()
-	if err != nil {
-		panic(err)
-	}
-
-	// If we didn't receive a json array, treat it as a tuple instead
-	if data[0] != '[' {
-		this.tupleBuffer.PushBack(data)
-		return this.readTaskIds()
-	}
-
-	err = json.Unmarshal(data, &taskIds)
-	if err != nil {
-		panic(err)
-	}
-	return taskIds
-}
-
 // ReadTuple reads a tuple from Storm of which the contents are known
 // and decodes the contents into the provided list of structs
 func (this *boltConnImpl) ReadTuple(contentStructs ...interface{}) (metadata *TupleMetadata, err error) {
@@ -263,52 +150,29 @@ func (this *boltConnImpl) ReadTuple(contentStructs ...interface{}) (metadata *Tu
 		return nil, errors.New("Attempting to read from uninitialised Storm connection")
 	}
 
-	tuple := &TupleMsg{}
-	for _, contentStruct := range contentStructs {
-		tuple.AddContent(contentStruct)
+	tuple := &TupleMsg{
+		Contents: this.ConstructInput(contentStructs...),
 	}
-	err = this.readMsg(tuple)
+	err = this.ReadMsg(tuple)
 	if err != nil {
 		return nil, err
 	}
 
+	this.DecodeInput(tuple.Contents, contentStructs...)
 	return tuple.TupleMetadata, nil
-}
-
-// ReadRawTuple reads a tuple from Storm of which the contents are unknown.
-// Json generic unmarshalling rules will apply to the contents
-func (this *boltConnImpl) ReadRawTuple() (tuple *TupleMsg, err error) {
-	if this.context == nil {
-		return nil, errors.New("Attempting to read from uninitialised Storm connection")
-	}
-
-	tuple = &TupleMsg{}
-	err = this.readMsg(tuple)
-	if err != nil {
-		return nil, err
-	}
-	return tuple, nil
 }
 
 // SendAck acks the received message id
 // SendAck has to be called after an emission anchored to the acked id,
 // otherwise Storm will report an error.
 func (this *boltConnImpl) SendAck(id string) {
-	this.sendEncoded(fmt.Sprintf(`{"command": "ack", "id": "%s"}`, id))
+	this.SendEncoded(fmt.Sprintf(`{"command": "ack", "id": "%s"}`, id))
 }
 
 // SendFail reports that the message with the given Id failed
 // No emission should be anchored to a failed message Id
 func (this *boltConnImpl) SendFail(id string) {
-	this.sendEncoded(fmt.Sprintf(`{"command": "fail", "id": "%s"}`, id))
-}
-
-func contentsAppend(contents ...interface{}) []interface{} {
-	var contentList []interface{}
-	for _, content := range contents {
-		contentList = append(contentList, content)
-	}
-	return contentList
+	this.SendEncoded(fmt.Sprintf(`{"command": "fail", "id": "%s"}`, id))
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,
@@ -316,14 +180,14 @@ func contentsAppend(contents ...interface{}) []interface{} {
 // A stream value of "" or "default" can be used to denote the default stream
 // The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...interface{}) (taskIds []int) {
-	emission := boltEmission{
+	msg := emission{
 		Command:  "emit",
 		Anchors:  anchors,
 		Stream:   stream,
-		Contents: contentsAppend(contents...),
+		Contents: this.ConstructOutput(contents...),
 	}
-	this.sendMsg(emission)
-	return this.readTaskIds()
+	this.SendMsg(msg)
+	return this.ReadTaskIds()
 }
 
 // EmitDirect emits a tuple with the given array of interface{}s as values,
@@ -334,14 +198,14 @@ func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...inte
 // A stream value of "" or "default" can be used to denote the default stream
 // The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) EmitDirect(anchors []string, stream string, directTask int, contents ...interface{}) {
-	emission := boltDirectEmission{
+	msg := emission{
 		Command:  "emit",
 		Anchors:  anchors,
 		Stream:   stream,
 		Task:     directTask,
-		Contents: contentsAppend(contents...),
+		Contents: this.ConstructOutput(contents...),
 	}
-	this.sendMsg(emission)
+	this.SendMsg(msg)
 }
 
 //-------------------------------------------------------------------
@@ -349,9 +213,9 @@ func (this *boltConnImpl) EmitDirect(anchors []string, stream string, directTask
 //-------------------------------------------------------------------
 
 // NewSpoutConn returns a Storm spout connection that a Go spout can use to communicate with Storm
-func NewSpoutConn() SpoutConn {
+func NewSpoutConn(in encoding.Input, out encoding.Output) SpoutConn {
 	spoutConn := &spoutConnImpl{
-		stormConnImpl: newStormConn(spout),
+		stormConnImpl: newStormConn(in, out),
 	}
 	return spoutConn
 }
@@ -364,14 +228,14 @@ type spoutConnImpl struct {
 // ReadMsg reads a message from Storm.
 // The message read can be either a next, ack or fail message.
 // A check is performed to verify that Storm has been initialised.
-func (this *spoutConnImpl) ReadMsg() (msg *spoutMsg, err error) {
+func (this *spoutConnImpl) ReadSpoutMsg() (msg *spoutMsg, err error) {
 	if this.context == nil {
 		return nil, errors.New("Attempting to read from uninitialised Storm connection")
 	}
 	this.readyToSend = true
 
 	msg = &spoutMsg{}
-	err = this.readMsg(msg)
+	err = this.ReadMsg(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +248,7 @@ func (this *spoutConnImpl) ReadMsg() (msg *spoutMsg, err error) {
 // enforce the synchronous behaviour of a spout as required by Storm.
 func (this *spoutConnImpl) SendSync() {
 	this.readyToSend = false
-	this.sendEncoded(`{"command": "sync"}`)
+	this.SendEncoded(`{"command": "sync"}`)
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,
@@ -396,21 +260,14 @@ func (this *spoutConnImpl) Emit(id string, stream string, contents ...interface{
 		panic("Spout not ready to send")
 	}
 
-	emission := spoutEmission{
+	msg := emission{
 		Command:  "emit",
 		Id:       id,
 		Stream:   stream,
-		Contents: contentsAppend(contents...),
+		Contents: this.ConstructOutput(contents...),
 	}
-	this.sendMsg(emission)
-
-	// Upon an indirect emit, storm replies with a list of chosen destination task Ids
-	err := this.readMsg(&taskIds)
-	// EOF is only an issue when using test files
-	if err != nil {
-		panic(err)
-	}
-	return taskIds
+	this.SendMsg(msg)
+	return this.ReadTaskIds()
 }
 
 // EmitDirect emits a tuple with the given array of interface{}s as values,
@@ -424,12 +281,12 @@ func (this *spoutConnImpl) EmitDirect(id string, stream string, directTask int, 
 		panic("Spout not ready to send")
 	}
 
-	emission := spoutDirectEmission{
+	msg := emission{
 		Command:  "emit",
 		Id:       id,
 		Stream:   stream,
 		Task:     directTask,
-		Contents: contentsAppend(contents...),
+		Contents: this.ConstructOutput(contents...),
 	}
-	this.sendMsg(emission)
+	this.SendMsg(msg)
 }

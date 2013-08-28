@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"github.com/jsgilmore/gostorm"
+	stormjson "github.com/jsgilmore/gostorm/encoding/json"
 	"log"
 	"os"
 	"os/signal"
@@ -58,8 +59,10 @@ func main() {
 		}
 	}()
 
-	boltConn := gostorm.NewBoltConn()
-	boltConn.Initialise(os.Stdin, os.Stdout)
+	input := stormjson.NewJsonObjectInput(os.Stdin)
+	output := stormjson.NewJsonObjectOutput(os.Stdout)
+	boltConn := gostorm.NewBoltConn(input, output)
+	boltConn.Initialise()
 
 	for {
 		var sentence string

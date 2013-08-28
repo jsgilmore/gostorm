@@ -1,5 +1,4 @@
-gostorm
-=======
+#gostorm
 
 GoStorm is a Go library that implements the communications protocol required for non-Java languages to communicate as part of a storm topology. In other words, gostorm lets you write Storm spouts and bolts in Go.
 
@@ -11,59 +10,115 @@ Currently, the main purpose of GoStorm is to act as a library for Go spouts and 
 
 For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the storm-starter WordCountTopology (https://github.com/nathanmarz/storm-starter).
 
-The GoStorm API provides two types of Storm connections: SpoutConn and BoltConn. Both of the underlying structures implement some of the more finicky parts of the Storm communications protocol, so you don't have to worry about them.
-
-Bolt usage
-==========
-
-To create your own Storm bolt connection:
+The GoStorm library contains a spoutConn and a boltConn that you can use to implement a spout or bolt respectively. The respective interfaces are:
 ```go
-boltConn := storm.NewBoltConn()
-spoutConn.Initialise(os.Stdin, os.Stdout)
-```
-
-The Initialise function received the configuration from storm and reports your pid to storm. Storm communicates over stdin and stdout. It is possible to redirect the input and output for testing purposes. See storm_test.go.
-
-In a bolt, you'll usually have something like this:
-```go
-for {
-	var msg myStruct
-  	meta, err := boltConn.ReadTuple(&msg)
-	if err != nil {
-		panic(err)
-	}
-	data, ok := handleMsg(msg)
-	if ok {
-		boltConn.Emit([]string{tuple.Id}, "", data)
-		boltConn.sendAck(meta.Id)
-	} else {
-		boltConn.SendFail(meta.Id)
-	}
+// BoltConn is the interface that implements the possible bolt actions
+type BoltConn interface {
+    Initialise()
+    Context() *Context
+    Log(msg string)
+    ReadTuple(contentStructs ...interface{}) (meta *TupleMetadata, err error)
+    SendAck(id string)
+    SendFail(id string)
+    Emit(anchors []string, stream string, content ...interface{}) (taskIds []int)
+    EmitDirect(anchors []string, stream string, directTask int, contents ...interface{})
 }
-```
-  
-There are two methods to read tuples from Storm. ReadTuple and ReadRawTuple. If you don't know what type of contents you expect from storm, use ReadRawTuple. If you expect a certain type of message, use ReadTuple. ReadTuple packs the contents of the tuple into the struct you give it. This is very handy and you can design your code that you always know which type of message to expect.
-
-In a system where you're sending multiple types of messages, you can create a message that's a union of all possible message types. The union will have the format:
-```go
-type myMsg struct {
-	Event1 *EventType1 `json:"Event1,omitempty"`
-	Event2 *EventType2 `json:"Event2,omitempty"`
+ 
+// SpoutConn is the interface that implements the possible spout actions
+type SpoutConn interface {
+    Initialise()
+    Context() *Context
+    Log(msg string)
+    ReadSpoutMsg() (msg *spoutMsg, err error)
+    SendSync()
+    Emit(id string, stream string, contents ...interface{}) (taskIds []int)
+    EmitDirect(id string, stream string, directTask int, contents ...interface{})
 }
 ```
 
-Now, whenever you send a msg, create a new union message and insert the message that you want to transmit. json will only encode the filled in fields. When you receive the message, you know always know which message will be received and to check which actual message was received, you just test which member is != nil.
+##Creating a boltConn
 
-Also bear in mind that it is possible to Emit and Read multiple message types at once, because of the ...interface{} contents parameter.
-
-Spout usage
-===========
-
-To create your own Storm spout connection:
+Usually, you will be writing Storm bolts, so I shall focus on how to use GoStorm to write bolts. Firstly, you need to create the required boltConn. The most flexible way to do this is:
 ```go
-spoutConn := storm.NewSpoutConn()
-spoutConn.Initialise(os.Stdin, os.Stdout)
+import (
+    "github.com/jsgilmore/gostorm"
+    stormenc "github.com/jsgilmore/gostorm/encoding"
+    _ "github.com/jsgilmore/gostorm/encoding/json"
+    "io"
+    "os"
+)
+ 
+func getBoltConn(encoding string, reader io.Reader) (boltConn gostorm.BoltConn) {
+    inputFactory := stormenc.LookupInput(encoding)
+    outputFactory := stormenc.LookupOutput(encoding)
+    input := inputFactory.NewInput(reader)
+    output := outputFactory.NewOutput(os.Stdout)
+    boltConn = gostorm.NewBoltConn(input, output)
+    boltConn.Initialise()
+}
 ```
+
+The GoStorm library has implemented various encoding methods to communicate with Storm shell components. Currently implemented encodings are:
+
+1. jsonObject - serialises emissions as json objects and serialises tuples that should be transferred as json objects. The shell component has to unmarshal the json tuple and use Java serialisation to serialise the object as a Kryo object.
+2. jsonEncoding - serialises emissions as json objects, but performs an extra json marshalling step on the tuples that should be transferred. This means that tuples are transferred as byte slices and not json objects, which simplifies the process of the shell component having to unmarshal the json byte slice and having to Kryo serialise it.
+
+The GoStorm library makes use of a registry pattern, where each encoding registers itself with GoStorm. The storm developer can then lookup the encoding by calling the stormenc lookup functions. These return factory that can be used to create the required input and output encodings. It should be noted that for an encoding to be available for lookup, it still has to be imported as:  _ "github.com/jsgilmore/gostorm/encoding/json". As shown in the above example.
+
+Input encodings require an io.Reader and output encodings require an io.Writer. This is the interface over which it will try to communicate. For standard Storm functionality, these are os.Stdin and os.Stdout. Always ensure that the boltConn is Initialised, before you start using it. It will panic otherwise. During initialisation, the boltConn connects to Storm and performs various setup functions with Storm (like obtaining the topology configuration and communicating its pid).
+
+The simplest way to create a boltConn is:
+```go
+import (
+    "github.com/jsgilmore/gostorm"
+    stormjson "github.com/jsgilmore/gostorm/encoding/json"
+    "os"
+)
+ 
+func getBoltConn() (boltConn gostorm.BoltConn) {
+    input := stormjson.NewJsonEncodedInput(os.Stdin)
+    output := stormjson.NewJsonEncodedOutput(os.Stdout)
+    boltConn := gostorm.NewBoltConn(input, output)
+    boltConn.Initialise()
+}
+```
+
+In this example, the encoding, input and output interfaces are fixed at compile time. Note that the spoutConn creation process is identical to the boltConn creation process.
+
+##The Bolt Run() loop
+After the boltConn is created, your bolt can start using. This is usually in the form of a Run() loop that is part of your Go "object":
+```go
+func (this *myStruct) Run() {
+    for {
+        var id string
+        msg := &myMsgType{}
+        meta, err := this.boltConn.ReadTuple(&id, msg)
+        if err == io.EOF {
+            this.Close()
+            return
+        } else if err != nil {
+            panic(err)
+        }
+        
+        this.Event(id, msg)
+        this.boltConn.SendAck(meta.Id)
+    }
+}
+```
+
+The above code shows an example of the run loop. It continuously reads messages from Storm and handles those messages. To read messages from Storm, you have to call the ReadTuple function and pass it empty non-nil structures for GoStorm to populate. In Lines 3 and 4, these empty objects are created and then passed to ReadTuple in Line 5. The EOF error checked at Line 6 may occur if your testing Storm with some finite input buffer. You usually don't have to include this check.
+
+After receiving objects from ReadTuple, the Event message handler function is called. The message handler logic is contained in the Event function. To enable you to chain Storm spout and bolts together during integration testing, your bolt should implement the Consumer interface:
+```go
+type Consumer interface {
+    Event(msgs ...interface{})
+}
+```
+You can then create GoStorm mock spouts and bolts and give them your bolt objects as the consumers in the chain.
+
+#Spout usage
+
+SpoutConns can be created similarly to boltConns.
 
 Since spouts are synchronous, a spout has to wait for next, ack or fail messages from Storm before it may send messages. After a spout has sent the messages it wishes to send, it has to send a sync message to Storm. The sync message signals that a spout will not send any more messages until the next "next", "ack" or "fail" message is received.
 
@@ -90,5 +145,3 @@ func (this *mySpoutImpl) Emit(msg interface{}) {
 	this.spoutConn.SendSync()
 }
 ```
-
-This function might still be integrated into the Storm library itself. I just need to think about how best to combine Emiting data with handling acks and fails.

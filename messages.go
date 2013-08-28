@@ -92,11 +92,17 @@ type TupleMsg struct {
 	Contents []interface{} `json:"tuple"`
 }
 
-func (this *TupleMsg) AddContent(content interface{}) {
-	this.Contents = append(this.Contents, content)
+// Multilang message definitions:
+// {"command": "next"}
+// {"command": "sync"}
+// {"command": "ack", "id": "1231231"}
+// {"command": "fail", "id": "1231231"}
+type spoutMsg struct {
+	Command string `json:"command"`
+	Id      string `json:"id,omitempty"`
 }
 
-// Multilang message definition:
+// Multilang bolt emission message definition:
 //  {
 //	"command": "emit",
 //	// The ids of the tuples this output tuples should be anchored to
@@ -108,32 +114,8 @@ func (this *TupleMsg) AddContent(content interface{}) {
 //	// All the values in this tuple
 //	"tuple": ["field1", 2, 3]
 //  }
-type boltEmission struct {
-	Command  string        `json:"command"`
-	Anchors  []string      `json:"anchors"`
-	Stream   string        `json:"stream,omitempty"`
-	Contents []interface{} `json:"tuple"`
-}
 
-type boltDirectEmission struct {
-	Command  string        `json:"command"`
-	Anchors  []string      `json:"anchors"`
-	Stream   string        `json:"stream,omitempty"`
-	Task     int           `json:"task"`
-	Contents []interface{} `json:"tuple"`
-}
-
-// Multilang message definitions:
-// {"command": "next"}
-// {"command": "sync"}
-// {"command": "ack", "id": "1231231"}
-// {"command": "fail", "id": "1231231"}
-type spoutMsg struct {
-	Command string `json:"command"`
-	Id      string `json:"id,omitempty"`
-}
-
-// Multilang message definition:
+// Multilang spout emission message definition:
 //  {
 //	"command": "emit",
 //	// The id for the tuple. Leave this out for an unreliable emit. The id can
@@ -146,17 +128,12 @@ type spoutMsg struct {
 //	// All the values in this tuple
 //	"tuple": ["field1", 2, 3]
 //  }
-type spoutEmission struct {
-	Command  string        `json:"command"`
-	Id       string        `json:"id"`
-	Stream   string        `json:"stream,omitempty"`
-	Contents []interface{} `json:"tuple"`
-}
 
-type spoutDirectEmission struct {
+type emission struct {
 	Command  string        `json:"command"`
-	Id       string        `json:"id"`
+	Id       string        `json:"id,omitempty"`
+	Anchors  []string      `json:"anchors,omitempty"`
 	Stream   string        `json:"stream,omitempty"`
-	Task     int           `json:"task"`
+	Task     int           `json:"task,omitempty"`
 	Contents []interface{} `json:"tuple"`
 }
