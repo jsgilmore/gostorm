@@ -59,7 +59,6 @@ func getBoltConn(encoding string, reader io.Reader) (boltConn gostorm.BoltConn) 
 ```
 
 The GoStorm library has implemented various encoding methods to communicate with Storm shell components. Currently implemented encodings are:
-
 1. jsonObject - serialises emissions as json objects and serialises tuples that should be transferred as json objects. The shell component has to unmarshal the json tuple and use Java serialisation to serialise the object as a Kryo object.
 2. jsonEncoding - serialises emissions as json objects, but performs an extra json marshalling step on the tuples that should be transferred. This means that tuples are transferred as byte slices and not json objects, which simplifies the process of the shell component having to unmarshal the json byte slice and having to Kryo serialise it.
 
@@ -88,7 +87,7 @@ In this example, the encoding, input and output interfaces are fixed at compile 
 ##The Bolt Run() loop
 After the boltConn is created, your bolt can start using. This is usually in the form of a Run() loop that is part of your Go "object":
 ```go
-func (this *myStruct) Run() {
+func (this *myBolt) Run() {
     for {
         var id string
         msg := &myMsgType{}
@@ -101,7 +100,6 @@ func (this *myStruct) Run() {
         }
         
         this.Event(id, msg)
-        this.boltConn.SendAck(meta.Id)
     }
 }
 ```
@@ -115,6 +113,33 @@ type Consumer interface {
 }
 ```
 You can then create GoStorm mock spouts and bolts and give them your bolt objects as the consumers in the chain.
+
+##Emitting tuples
+To emit tuples (objects) to another bolt, the Emit and EmitDirect functions can be used:
+```go
+func (this *myBolt) emitRecord(meta *gostorm.TupleMetadata, key string, msg *myMsgType) {
+	event := &myBoltEvent{
+		Message: msg,
+	}
+	this.boltConn.Emit([]string{meta.Id}, "default", key, event)
+	this.boltConn.SendAck(meta.Id)
+}
+```
+
+The parameters required by the Emit function are:
+1. List of tuple IDs to anchor this emission to.
+2. The output stream to emit the tuple on.
+3. A list of objects that should be emitted.
+
+Tuple emissions may be anchored to received tuples. This specifies that the current emission is as a result of the earlier received tuple. An emission may be anchored to multiple received tuples (say you joined some tuples to create a compound tuple), which is why a list is required. Anchoring emissions to received tuples will have the effect that the original emission at the spout will only be acked after all resulting emissions have been acked. If any resultant emission is fail, the spout will immediately receive a failure notification from Storm. If an emission fails to be acked within some timeout period (30s default), the spout originating the emission will also receive a failure notification.
+
+If you bolt only has one output stream, you can just use the "default" string, or the empty ("") string. You will see where streams come in to the picture when we define a topology.
+
+A union message type is always emitted (myBoltEvent). The union message contains pointers to all the message types that our bolt can emit. Whenever a message is emitted, it is first placed in the union message structure. This way, the received always knows what message type to cast to and can then check for a non-nil element in the union message. 
+
+The last two objects in the Emit call are the contents of the message that will be transferred to the receiving bolt in the form that they are Emitted here. It is possible to specify any number of objects. In the above example, we specified a ket and a message. The first field will be used to group tuples on as part of a fieldsGrouping that will be shown when the topology definition is shown. 
+
+To ensure the "at least once" processing semantics of Storm, every tuple that is receive should be acknowledged, either by an Ack or a Fail. This is done by the SendAck and SendFail functions that is part of the boltConn interface. To enable Storm to build up its ack directed acyclic graph (DAG): no emission may be anchored to a tuple that has already been acked. The Storm topology will panic if this occurs. 
 
 #Spout usage
 
