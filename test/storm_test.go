@@ -12,13 +12,15 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package gostorm
+package test
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	stormjson "github.com/jsgilmore/gostorm/encoding/json"
+	"github.com/jsgilmore/gostorm"
+	stormenc "github.com/jsgilmore/gostorm/encoding/json"
+	"github.com/jsgilmore/gostorm/messages"
 	"io"
 	"math/rand"
 	"os"
@@ -45,19 +47,33 @@ var (
 	}
 )
 
-func genTupleMsg(id string, content interface{}) *TupleMsg {
-	msg := newTupleMsg(id, "spout", "default", 4)
-	msg.Contents = append(msg.Contents, content)
+func newJsonTupleMsg(id, comp, stream string, task int64) *messages.TupleMsg {
+	msg := &messages.TupleMsg{
+		TupleJson: &messages.TupleJson{
+			TupleMetadata: &messages.TupleMetadata{
+				Id:     id,
+				Comp:   comp,
+				Stream: stream,
+				Task:   task,
+			},
+		},
+	}
 	return msg
 }
 
-func testTupleMsg(index int) *TupleMsg {
+func genTupleMsg(id string, content interface{}) *messages.TupleMsg {
+	msg := newJsonTupleMsg(id, "spout", "default", 4)
+	msg.TupleJson.Contents = append(msg.TupleJson.Contents, content)
+	return msg
+}
+
+func testTupleMsg(index int) *messages.TupleMsg {
 	return genTupleMsg(ids[index], contents[index])
 }
 
-func genTaskIdsMsg() (taskIds []int) {
+func genTaskIdsMsg() (taskIds []int32) {
 	for i := 0; i < rand.Intn(10)+1; i++ {
-		taskIds = append(taskIds, rand.Int()+1)
+		taskIds = append(taskIds, rand.Int31()+1)
 	}
 	return taskIds
 }
@@ -78,38 +94,25 @@ func feedConf(buffer io.Writer, t *testing.T) {
 
 func msgCheck(given, expected string, t *testing.T) {
 	if given != expected {
-		t.Errorf("Bolt failed to read msg (expected: %s, received: %s)", expected, given)
+		t.Fatalf("Bolt failed to read msg (expected: %s, received: %s)", expected, given)
 	}
 }
 
-func metaTest(given *TupleMetadata, index int, t *testing.T) {
-	expected := &TupleMetadata{
+func metaTest(given *messages.TupleMetadata, index int, t *testing.T) {
+	expected := &messages.TupleMetadata{
 		Id:     ids[index],
 		Stream: "default",
 		Comp:   "spout",
 		Task:   4,
 	}
-	metaCheck(given, expected, t)
-}
-
-func metaCheck(given, expected *TupleMetadata, t *testing.T) {
-	if given.Id != expected.Id {
-		t.Error("Tuple metadata Ids don't match")
-	}
-	if given.Comp != expected.Comp {
-		t.Error("Tuple metadata components don't match")
-	}
-	if given.Stream != expected.Stream {
-		t.Error("Tuple metadata streams don't match")
-	}
-	if given.Task != expected.Task {
-		t.Error("Tuple metadata task Ids don't match")
+	if !given.Equal(expected) {
+		t.Fatal("Tuple metadata not as expected")
 	}
 }
 
 func checkErr(err error, t *testing.T) {
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 }
 
@@ -124,8 +127,14 @@ func expect(expected string, buffer *bytes.Buffer, t *testing.T) {
 	recv, err := buffer.ReadString('\n')
 	checkErr(err, t)
 	if recv != expected+"\n" {
-		t.Errorf("Expected: %s, received: %s", recv, expected)
+		t.Fatalf("Expected: %s, received: %s", expected, recv)
 	}
+}
+
+func expectPid(outBuffer *bytes.Buffer, t *testing.T) {
+	expected := fmt.Sprintf(`{"pid":%d}`, os.Getpid())
+	expect(expected, outBuffer, t)
+	expect("end", outBuffer, t)
 }
 
 func TestInit(t *testing.T) {
@@ -134,20 +143,37 @@ func TestInit(t *testing.T) {
 
 	outBuffer := bytes.NewBuffer(nil)
 
-	input := stormjson.NewJsonObjectInput(inBuffer)
-	output := stormjson.NewJsonObjectOutput(outBuffer)
-	boltConn := NewBoltConn(input, output)
+	input := stormenc.NewJsonObjectInput(inBuffer)
+	output := stormenc.NewJsonObjectOutput(outBuffer)
+	boltConn := gostorm.NewBoltConn(input, output)
 	boltConn.Initialise()
 
-	expect(fmt.Sprintf(`{"pid":%d}`, os.Getpid()), outBuffer, t)
-	expect("end", outBuffer, t)
+	expectPid(outBuffer, t)
 
 	// Check whether the pid file was created
 	checkPidFile(t)
 }
 
 func TestLog(t *testing.T) {
+	inBuffer := bytes.NewBuffer(nil)
+	feedConf(inBuffer, t)
+	outBuffer := bytes.NewBuffer(nil)
+	input := stormenc.NewJsonObjectInput(inBuffer)
+	output := stormenc.NewJsonObjectOutput(outBuffer)
+	spoutConn := gostorm.NewSpoutConn(input, output)
+	spoutConn.Initialise()
 
+	expectPid(outBuffer, t)
+
+	for i := 0; i < 6; i++ {
+		msg := fmt.Sprintf("%d", rand.Int63())
+		spoutConn.Log(msg)
+		// Expect emission
+		expect(fmt.Sprintf(`{"command":"log","msg":"%s"}`, msg), outBuffer, t)
+		expect("end", outBuffer, t)
+	}
+
+	checkPidFile(t)
 }
 
 func feedReadTuple(buffer io.Writer, t *testing.T) {
@@ -165,9 +191,9 @@ func TestReadTuple(t *testing.T) {
 
 	feedReadTuple(buffer, t)
 
-	input := stormjson.NewJsonObjectInput(buffer)
-	output := stormjson.NewJsonObjectOutput(os.Stdout)
-	boltConn := NewBoltConn(input, output)
+	input := stormenc.NewJsonObjectInput(buffer)
+	output := stormenc.NewJsonObjectOutput(os.Stdout)
+	boltConn := gostorm.NewBoltConn(input, output)
 	boltConn.Initialise()
 
 	var msg string
@@ -181,19 +207,15 @@ func TestReadTuple(t *testing.T) {
 	checkPidFile(t)
 }
 
-func TestReadRawTuple(t *testing.T) {
-
-}
-
 func TestSendAck(t *testing.T) {
 	inBuffer := bytes.NewBuffer(nil)
 	feedConf(inBuffer, t)
 
 	outBuffer := bytes.NewBuffer(nil)
 
-	input := stormjson.NewJsonObjectInput(inBuffer)
-	output := stormjson.NewJsonObjectOutput(outBuffer)
-	boltConn := NewBoltConn(input, output)
+	input := stormenc.NewJsonObjectInput(inBuffer)
+	output := stormenc.NewJsonObjectOutput(outBuffer)
+	boltConn := gostorm.NewBoltConn(input, output)
 	boltConn.Initialise()
 
 	var ids []string
@@ -208,7 +230,7 @@ func TestSendAck(t *testing.T) {
 	expect("end", outBuffer, t)
 
 	for i := 0; i < 1000; i++ {
-		expect(fmt.Sprintf(`{"command": "ack", "id": "%s"}`, ids[i]), outBuffer, t)
+		expect(fmt.Sprintf(`{"command":"ack","id":"%s"}`, ids[i]), outBuffer, t)
 		expect("end", outBuffer, t)
 	}
 	checkPidFile(t)
@@ -220,9 +242,9 @@ func TestSendFail(t *testing.T) {
 
 	outBuffer := bytes.NewBuffer(nil)
 
-	input := stormjson.NewJsonObjectInput(inBuffer)
-	output := stormjson.NewJsonObjectOutput(outBuffer)
-	boltConn := NewBoltConn(input, output)
+	input := stormenc.NewJsonObjectInput(inBuffer)
+	output := stormenc.NewJsonObjectOutput(outBuffer)
+	boltConn := gostorm.NewBoltConn(input, output)
 	boltConn.Initialise()
 
 	var ids []string
@@ -237,14 +259,14 @@ func TestSendFail(t *testing.T) {
 	expect("end", outBuffer, t)
 
 	for i := 0; i < 1000; i++ {
-		expect(fmt.Sprintf(`{"command": "fail", "id": "%s"}`, ids[i]), outBuffer, t)
+		expect(fmt.Sprintf(`{"command":"fail","id":"%s"}`, ids[i]), outBuffer, t)
 		expect("end", outBuffer, t)
 	}
 
 	checkPidFile(t)
 }
 
-func feedBoltSync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int) {
+func feedBoltSync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int32) {
 	feedConf(inBuffer, t)
 	writeMsg(testTupleMsg(0), inBuffer, t)
 	taskIds := genTaskIdsMsg()
@@ -278,11 +300,14 @@ func feedBoltSync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int) {
 	return
 }
 
-func testBoltEmit(taskIdsList [][]int, inBuffer io.Reader, t *testing.T) {
-	input := stormjson.NewJsonObjectInput(inBuffer)
-	output := stormjson.NewJsonObjectOutput(os.Stdout)
-	boltConn := NewBoltConn(input, output)
+func testBoltEmit(taskIdsList [][]int32, inBuffer io.Reader, t *testing.T) {
+	outBuffer := bytes.NewBuffer(nil)
+	input := stormenc.NewJsonObjectInput(inBuffer)
+	output := stormenc.NewJsonObjectOutput(outBuffer)
+	boltConn := gostorm.NewBoltConn(input, output)
 	boltConn.Initialise()
+
+	expectPid(outBuffer, t)
 
 	var msg string
 	for i := 0; i < 6; i++ {
@@ -292,6 +317,8 @@ func testBoltEmit(taskIdsList [][]int, inBuffer io.Reader, t *testing.T) {
 		metaTest(meta, i, t)
 
 		taskIds := boltConn.Emit([]string{}, "", fmt.Sprintf("Msg%d", i))
+
+		// Expect task Ids
 		if len(taskIds) != len(taskIdsList[i]) {
 			t.Error("Task id list is not of expected length")
 		}
@@ -300,6 +327,10 @@ func testBoltEmit(taskIdsList [][]int, inBuffer io.Reader, t *testing.T) {
 				t.Error("Returned task Ids do not match expected")
 			}
 		}
+
+		// Expect emission
+		expect(fmt.Sprintf(`{"command":"emit","tuple":["Msg%d"]}`, i), outBuffer, t)
+		expect("end", outBuffer, t)
 	}
 
 	checkPidFile(t)
@@ -311,11 +342,7 @@ func TestBoltSyncEmit(t *testing.T) {
 	testBoltEmit(taskIdsList, inBuffer, t)
 }
 
-func TestBoltEmitDirect(t *testing.T) {
-
-}
-
-func feedBoltAsync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int) {
+func feedBoltAsync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int32) {
 	// Send messages and task Ids in an asynchronous way
 	feedConf(inBuffer, t)
 	writeMsg(testTupleMsg(0), inBuffer, t)
@@ -354,17 +381,79 @@ func TestBoltAsyncEmit(t *testing.T) {
 	testBoltEmit(taskIdsList, inBuffer, t)
 }
 
+func newSpoutMsg(command, id string) *messages.SpoutMsg {
+	msg := &messages.SpoutMsg{
+		Command: command,
+		Id:      id,
+	}
+	return msg
+}
+
+func feedReadMsg(buffer io.Writer, t *testing.T) []*messages.SpoutMsg {
+	var spoutMsgs []*messages.SpoutMsg
+	feedConf(buffer, t)
+	spoutMsg := newSpoutMsg("next", "")
+	spoutMsgs = append(spoutMsgs, spoutMsg)
+	writeMsg(spoutMsg, buffer, t)
+	spoutMsg = newSpoutMsg("ack", "0")
+	spoutMsgs = append(spoutMsgs, spoutMsg)
+	writeMsg(spoutMsg, buffer, t)
+	spoutMsg = newSpoutMsg("ack", "puppy")
+	spoutMsgs = append(spoutMsgs, spoutMsg)
+	writeMsg(spoutMsg, buffer, t)
+	spoutMsg = newSpoutMsg("ack", "3231puppy")
+	spoutMsgs = append(spoutMsgs, spoutMsg)
+	writeMsg(spoutMsg, buffer, t)
+	spoutMsg = newSpoutMsg("fail", "1")
+	spoutMsgs = append(spoutMsgs, spoutMsg)
+	writeMsg(spoutMsg, buffer, t)
+	spoutMsg = newSpoutMsg("fail", "kitten")
+	spoutMsgs = append(spoutMsgs, spoutMsg)
+	writeMsg(spoutMsg, buffer, t)
+	return spoutMsgs
+}
+
 func TestReadMsg(t *testing.T) {
+	buffer := bytes.NewBuffer(nil)
 
-}
+	spoutMsgs := feedReadMsg(buffer, t)
 
-func TestSpoutEmit(t *testing.T) {
+	input := stormenc.NewJsonObjectInput(buffer)
+	output := stormenc.NewJsonObjectOutput(os.Stdout)
+	spoutConn := gostorm.NewSpoutConn(input, output)
+	spoutConn.Initialise()
 
-}
+	for i := 0; i < 6; i++ {
+		command, id, err := spoutConn.ReadSpoutMsg()
+		checkErr(err, t)
+		if command != spoutMsgs[i].Command {
+			t.Fatalf(fmt.Sprintf("Incorrect command received: expected: %s, received: %s", spoutMsgs[i].Command, command))
+		}
+		if id != spoutMsgs[i].Id {
+			t.Fatalf(fmt.Sprintf("Incorrect id received: expected: %s, received: %s", spoutMsgs[i].Id, id))
+		}
+	}
 
-func TestSpoutEmitDirect(t *testing.T) {
-
+	checkPidFile(t)
 }
 
 func TestSendSync(t *testing.T) {
+	inBuffer := bytes.NewBuffer(nil)
+	feedConf(inBuffer, t)
+	outBuffer := bytes.NewBuffer(nil)
+	input := stormenc.NewJsonObjectInput(inBuffer)
+	output := stormenc.NewJsonObjectOutput(outBuffer)
+	spoutConn := gostorm.NewSpoutConn(input, output)
+	spoutConn.Initialise()
+
+	expectPid(outBuffer, t)
+
+	for i := 0; i < 6; i++ {
+		spoutConn.SendSync()
+		// Expect emission
+		expect(`{"command":"sync"}`, outBuffer, t)
+		expect("end", outBuffer, t)
+	}
+
+	checkPidFile(t)
 }

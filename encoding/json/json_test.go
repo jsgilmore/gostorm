@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jsgilmore/gostorm/encoding"
+	"github.com/jsgilmore/gostorm"
 	"math/rand"
 	"testing"
 )
@@ -56,7 +56,7 @@ func (this *testObj) Equal(that *testObj) bool {
 	return true
 }
 
-func testReadMsg(buffer *bytes.Buffer, input encoding.Input, t *testing.T) {
+func testReadMsg(buffer *bytes.Buffer, input gostorm.Input, t *testing.T) {
 	//Test sending some ints
 	for i := 0; i < 100; i++ {
 		name := fmt.Sprintf("%d", i)
@@ -81,55 +81,55 @@ func testReadMsg(buffer *bytes.Buffer, input encoding.Input, t *testing.T) {
 	}
 }
 
-func testObjectContructInput(t *testing.T) {
-	input := NewJsonObjectInput(nil)
-
-	testObjects := make([]*testObj, 5)
-	for i := 0; i < 5; i++ {
-		name := fmt.Sprintf("%d", i)
-		testObjects[i] = NewTestObj(name, i, []byte(name))
-	}
-
-	objects := input.ConstructInput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
-	for i, testObject := range testObjects {
-		if !testObject.Equal(objects[i].(*testObj)) {
-			t.Errorf("Constructing inputs failed")
-		}
-	}
-}
+//func testObjectContructInput(t *testing.T) {
+//	input := NewJsonObjectInput(nil)
+//
+//	testObjects := make([]*testObj, 5)
+//	for i := 0; i < 5; i++ {
+//		name := fmt.Sprintf("%d", i)
+//		testObjects[i] = NewTestObj(name, i, []byte(name))
+//	}
+//
+//	objects := input.ConstructInput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
+//	for i, testObject := range testObjects {
+//		if !testObject.Equal(objects[i].(*testObj)) {
+//			t.Errorf("Constructing inputs failed")
+//		}
+//	}
+//}
 
 func TestJsonObjectInput(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 	input := NewJsonObjectInput(buffer)
 
 	testReadMsg(buffer, input, t)
-	testObjectContructInput(t)
+	//testObjectContructInput(t)
 }
 
-func testEncodedContructInput(t *testing.T) {
-	input := NewJsonEncodedInput(nil)
-
-	testObjects := make([]*testObj, 5)
-	for i := 0; i < 5; i++ {
-		name := fmt.Sprintf("%d", i)
-		testObjects[i] = NewTestObj(name, i, []byte(name))
-	}
-
-	objects := input.ConstructInput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
-
-	for _, object := range objects {
-		if !bytes.Equal(*object.(*[]byte), []byte{}) {
-			t.Errorf("Expected: %+v, received: %+v", []byte{}, *object.(*[]byte))
-		}
-	}
-}
+//func testEncodedContructInput(t *testing.T) {
+//	input := NewJsonEncodedInput(nil)
+//
+//	testObjects := make([]*testObj, 5)
+//	for i := 0; i < 5; i++ {
+//		name := fmt.Sprintf("%d", i)
+//		testObjects[i] = NewTestObj(name, i, []byte(name))
+//	}
+//
+//	objects := input.ConstructInput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
+//
+//	for _, object := range objects {
+//		if !bytes.Equal(*object.(*[]byte), []byte{}) {
+//			t.Errorf("Expected: %+v, received: %+v", []byte{}, *object.(*[]byte))
+//		}
+//	}
+//}
 
 func TestJsonEncodedInput(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 	input := NewJsonEncodedInput(buffer)
 
 	testReadMsg(buffer, input, t)
-	testEncodedContructInput(t)
+	//testEncodedContructInput(t)
 }
 
 func expect(expected string, buffer *bytes.Buffer, t *testing.T) {
@@ -141,16 +141,7 @@ func expect(expected string, buffer *bytes.Buffer, t *testing.T) {
 	}
 }
 
-func testSendEncoded(buffer *bytes.Buffer, output encoding.Output, t *testing.T) {
-	for i := 0; i < 100; i++ {
-		msg := fmt.Sprintf("%d", rand.Int63())
-		output.SendEncoded(msg)
-		expect(msg, buffer, t)
-		expect("end", buffer, t)
-	}
-}
-
-func testSendMsg(buffer *bytes.Buffer, output encoding.Output, t *testing.T) {
+func testSendMsg(buffer *bytes.Buffer, output gostorm.Output, t *testing.T) {
 	for i := 0; i < 100; i++ {
 		msg := fmt.Sprintf("%d", rand.Int63())
 		output.SendMsg(msg)
@@ -162,59 +153,57 @@ func testSendMsg(buffer *bytes.Buffer, output encoding.Output, t *testing.T) {
 	}
 }
 
-func testConstructObjectOutput(t *testing.T) {
-	output := NewJsonObjectOutput(nil)
-
-	testObjects := make([]*testObj, 5)
-	for i := 0; i < 5; i++ {
-		name := fmt.Sprintf("%d", i)
-		testObjects[i] = NewTestObj(name, i, []byte(name))
-	}
-
-	objects := output.ConstructOutput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
-	for i, testObject := range testObjects {
-		if !testObject.Equal(objects[i].(*testObj)) {
-			t.Errorf("Constructing inputs failed")
-		}
-	}
-}
+//func testConstructObjectOutput(t *testing.T) {
+//	output := NewJsonObjectOutput(nil)
+//
+//	testObjects := make([]*testObj, 5)
+//	for i := 0; i < 5; i++ {
+//		name := fmt.Sprintf("%d", i)
+//		testObjects[i] = NewTestObj(name, i, []byte(name))
+//	}
+//
+//	objects := output.ConstructOutput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
+//	for i, testObject := range testObjects {
+//		if !testObject.Equal(objects[i].(*testObj)) {
+//			t.Errorf("Constructing inputs failed")
+//		}
+//	}
+//}
 
 func TestJsonObjectOutput(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 	output := NewJsonObjectOutput(buffer)
 
-	testSendEncoded(buffer, output, t)
 	testSendMsg(buffer, output, t)
-	testConstructObjectOutput(t)
+	//testConstructObjectOutput(t)
 }
 
-func testConstructDecodeEncoded(t *testing.T) {
-	input := NewJsonEncodedInput(nil)
-	output := NewJsonEncodedOutput(nil)
-
-	testObjects := make([]*testObj, 5)
-	destObjects := make([]*testObj, 5)
-	for i := 0; i < 5; i++ {
-		name := fmt.Sprintf("%d", i)
-		testObjects[i] = NewTestObj(name, i, []byte(name))
-		destObjects[i] = &testObj{}
-	}
-
-	objects := output.ConstructOutput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
-	input.DecodeInput(objects, destObjects[0], destObjects[1], destObjects[2], destObjects[3], destObjects[4])
-
-	for i, testObject := range testObjects {
-		if !testObject.Equal(destObjects[i]) {
-			t.Errorf("Expected: %+v, received: %+v", testObject, destObjects[i])
-		}
-	}
-}
+//func testConstructDecodeEncoded(t *testing.T) {
+//	input := NewJsonEncodedInput(nil)
+//	output := NewJsonEncodedOutput(nil)
+//
+//	testObjects := make([]*testObj, 5)
+//	destObjects := make([]*testObj, 5)
+//	for i := 0; i < 5; i++ {
+//		name := fmt.Sprintf("%d", i)
+//		testObjects[i] = NewTestObj(name, i, []byte(name))
+//		destObjects[i] = &testObj{}
+//	}
+//
+//	objects := output.ConstructOutput(testObjects[0], testObjects[1], testObjects[2], testObjects[3], testObjects[4])
+//	input.DecodeInput(objects, destObjects[0], destObjects[1], destObjects[2], destObjects[3], destObjects[4])
+//
+//	for i, testObject := range testObjects {
+//		if !testObject.Equal(destObjects[i]) {
+//			t.Errorf("Expected: %+v, received: %+v", testObject, destObjects[i])
+//		}
+//	}
+//}
 
 func TestJsonEncodedOutput(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 	output := NewJsonEncodedOutput(buffer)
 
-	testSendEncoded(buffer, output, t)
 	testSendMsg(buffer, output, t)
-	testConstructDecodeEncoded(t)
+	//testConstructDecodeEncoded(t)
 }

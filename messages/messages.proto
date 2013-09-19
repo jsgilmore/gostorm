@@ -1,0 +1,79 @@
+package messages;
+
+import "code.google.com/p/gogoprotobuf/gogoproto/gogo.proto";
+import "next/gogoprotobuf/nextproto/next.proto";
+
+option (gogoproto.verbose_equal_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.unsafe_unmarshaler_all) = true;
+option (gogoproto.unsafe_marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+message TaskComponentMapping {
+	optional string Task = 1 [(gogoproto.nullable) = false];
+	optional string Component = 2 [(gogoproto.nullable) = false];
+}
+
+message Topology {
+	optional int64 TaskId = 1 [(gogoproto.nullable) = false];
+	repeated TaskComponentMapping TaskComponentMappings = 2;
+}
+
+message Conf {
+	optional string Key = 1 [(gogoproto.nullable) = false];
+	optional string Value = 2 [(gogoproto.nullable) = false];
+}
+
+message Context {
+	optional string PidDir = 1 [(gogoproto.nullable) = false];
+	optional Topology Topology = 2;
+	repeated Conf Confs = 3;
+}
+
+message Pid {
+	optional int32 Pid = 1 [(gogoproto.nullable) = false];
+}
+
+message TupleMetadata {
+	optional string Id = 1 [(gogoproto.nullable) = false];
+	optional string Comp = 2 [(gogoproto.nullable) = false];
+	optional string Stream = 3 [(gogoproto.nullable) = false];
+	optional int64 Task = 4 [(gogoproto.nullable) = false];
+}
+
+message TupleProto {
+	optional TupleMetadata TupleMetadata = 1;
+	repeated bytes Contents = 2;
+}
+
+message TaskIds {
+	repeated int32 TaskIds = 1;
+}
+
+message SpoutMsg {
+	optional string Command = 1 [(gogoproto.nullable) = false];
+	optional string Id = 2 [(gogoproto.nullable) = false];
+}
+
+message EmissionMetadata {
+	optional string Command = 1 [(gogoproto.nullable) = false];
+	optional string Id = 2;
+	repeated string Anchors = 3;
+	optional string Stream = 4;
+	optional int64 Task = 5;
+	optional string Msg = 6;
+}
+
+message EmissionProto {
+	optional EmissionMetadata EmissionMetadata = 1;
+	repeated bytes Contents = 2;
+}
+
+message Test {
+	optional string Name = 1 [(gogoproto.nullable) = false];
+	optional int64 Number = 2 [(gogoproto.nullable) = false];
+	optional bytes Data = 3 [(gogoproto.nullable) = false];
+}
