@@ -14,6 +14,7 @@ Apart from implementing the multilang JSON protocol that is used by Storm shell 
 
 ##Encoding
 GoStorm implements various encoding schemes with varying levels of performance:
+
 1. jsonobject
 2. jsonencoded
 2. hybrid
@@ -141,6 +142,7 @@ func (this *myBolt) emitRecord(meta *messages.TupleMetadata, key string, msg *my
 ```
 
 The parameters required by the Emit function are:
+
 1. List of tuple IDs to anchor this emission to.
 2. The output stream to emit the tuple on.
 3. A list of objects that should be emitted.
@@ -230,6 +232,7 @@ The idea of a Spout completing might not make sense for a streaming computationa
 The last component of a mock topology requires a mock conn with some termination consumer. In the above example, this termination consumer if the printer comsumer that is part of the mock gostorm implementation. This printer consumer just prints all emissions to stdout.
 
 Because mock conns do not connect to a real Storm topology and because the mock conn implementation in GoStorm is still fairly immature, there are some important differences (and shortcomings) between mock components and real components that should be taken into account when testing:
+
 1. Mock components use no serialisation. Objects are sent along without any encoding. This means that mock performance might be greatly increased from real performance.
 2. When reading a spout message as a spout, a next message will always immediatly be returned.
 3. When emitting a message, only the objects that would form the contents of the emission are sent to the consumer. No metadata are sent.
