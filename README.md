@@ -155,7 +155,7 @@ The last two objects in the Emit call are the contents of the message that will 
 
 To ensure the "at least once" processing semantics of Storm, every tuple that is receive should be acknowledged, either by an Ack or a Fail. This is done by the SendAck and SendFail functions that is part of the boltConn interface. To enable Storm to build up its ack directed acyclic graph (DAG): no emission may be anchored to a tuple that has already been acked. The Storm topology will panic if this occurs.
 
-#Spout usage
+##Spout usage
 
 SpoutConns can be created similarly to boltConns.
 
@@ -182,3 +182,63 @@ func (this *mySpoutImpl) Emit(msg interface{}) {
     this.spoutConn.SendSync()
 }
 ```
+
+##Testing without Storm
+It's possible to link up GoStorm spouts and bolts using the mockConn implementations of GoStorm. This does not require a running Storm cluster or indeed anything other than the GoStorm library.
+
+To be able to link up a bolt into a mock topology, the bolt has to implement the Consumer interface:
+```go
+type Consumer interface {
+    Event(msgs ...interface{})
+}
+```
+
+An example of defining a mock topology:
+```go
+import (
+    mockstorm "github.com/jsgilmore/gostorm/mock"
+    "testing"
+)
+
+func makeBolt(consumer mockstorm.Consumer) *boltImpl {
+    boltConn := mockstorm.NewMockBoltConn(consumer)
+    boltConn.Initialise()
+    return NewBolt(boltConn)
+}
+ 
+func makeSpout(consumer mockstorm.Consumer) mockstorm.Runner {
+    spoutConn := mockstorm.NewMockSpoutConn(consumer)
+    spoutConn.Initialise()
+    return NewSpout(spoutConn)
+}
+ 
+func TestIntegratedTopology(t *testing.T) {
+    bolt := makeBolt(mockstorm.NewPrinter())
+    spout := makeSpout(bolt)
+    spout.Run()
+    spout.Close()
+    bolt.Close()
+}
+```
+
+To simplify the design of Storm components that can either run as part of a Storm cluster or mock components, the storm conn should be made injectable, i.e. when the component is created a storm conn is passed as parameter. Making the storm conn injectable allows for a real Storm conn to be used in the main method of the program when running as part of a Storm cluster and a mock Storm conn to be used when running unit tests.
+
+The process of testing a GoStorm topology as a mock topology involves the creation of all topology components in reverse order, where the input for each component is a mock conn, created with the next component as consumer parameter. When all component have been linked, the spout should be Run. This will start a single process that contains all the elements in the topology. When the spout completes, all created spouts and bolts should be closed.
+
+The idea of a Spout completing might not make sense for a streaming computational framework such as Storm, but it is a desirable quality when testing. To design a spout that completes, an input file might be used, instead of the spout's usual input stream, and when an EOF is received, the spout can close. This design leads to a spout that can be used as part of a Storm cluster, as well as for testing.
+
+The last component of a mock topology requires a mock conn with some termination consumer. In the above example, this termination consumer if the printer comsumer that is part of the mock gostorm implementation. This printer consumer just prints all emissions to stdout.
+
+Because mock conns do not connect to a real Storm topology and because the mock conn implementation in GoStorm is still fairly immature, there are some important differences (and shortcomings) between mock components and real components that should be taken into account when testing:
+1. Mock components use no serialisation. Objects are sent along without any encoding. This means that mock performance might be greatly increased from real performance.
+2. When reading a spout message as a spout, a next message will always immediatly be returned.
+3. When emitting a message, only the objects that would form the contents of the emission are sent to the consumer. No metadata are sent.
+4. No acks or fails will be delivered to spouts.
+5. Bolts sending acks or fails have no effect.
+6. Bolts reading Tuples return nil. The idea is that the readTuple function is called from the bolt's run loop, which calls the bolt's event function. The mock implementation bypasses a bolt's run loop, to directly call the event function of the consumer.
+7. Indirect emissions always return the taskId: 1, without any regard for which component in the mock topology an emission was transmitted to.
+8. Mock conns have no context (task-component mapping, taskId, pidDir). Requesting the context of a mock conn will return nil.
+9. Initialising mock components currently does nothing. No context is retrieved and no pid is communicated or written to file.
+10. Logging a message prints the log message to stdout.
+11. EmitDirect works the same as Emit (i.e. sends the object directly to the consumer).
+12. A spout sending a sync does nothing.
