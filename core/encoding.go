@@ -12,24 +12,23 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package encoding
+package core
 
 import (
 	"fmt"
+	"github.com/jsgilmore/gostorm/messages"
 	"io"
 )
 
 type Input interface {
 	ReadMsg(msg interface{}) (err error)
-	ReadTaskIds() (taskIds []int)
-	ConstructInput(contents ...interface{}) []interface{}
-	DecodeInput(contentList []interface{}, contentStructs ...interface{})
+	ReadTaskIds() (taskIds []int32)
+	ReadTuple(contentStructs ...interface{}) (metadata *messages.TupleMetadata, err error)
 }
 
 type Output interface {
 	SendMsg(msg interface{})
-	SendEncoded(msg string)
-	ConstructOutput(contents ...interface{}) []interface{}
+	EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{})
 }
 
 type InputFactory interface {
@@ -63,18 +62,30 @@ func RegisterOutput(name string, outFactory OutputFactory) {
 	}
 }
 
-func LookupInput(name string) InputFactory {
-	input, ok := inputs[name]
+func LookupInput(encoding string, reader io.Reader) Input {
+	input, ok := inputs[encoding]
 	if !ok {
-		panic(fmt.Sprintf("gostorm encoding: Specified input not registered: %s", name))
+		panic(fmt.Sprintf("gostorm encoding: Specified input not registered: %s", encoding))
 	}
-	return input
+	return input.NewInput(reader)
 }
 
-func LookupOutput(name string) OutputFactory {
-	output, ok := outputs[name]
+func LookupOutput(encoding string, writer io.Writer) Output {
+	output, ok := outputs[encoding]
 	if !ok {
-		panic(fmt.Sprintf("gostorm encoding: Specified output not registered: %s", name))
+		panic(fmt.Sprintf("gostorm encoding: Specified output not registered: %s", encoding))
 	}
-	return output
+	return output.NewOutput(writer)
+}
+
+func LookupBoltConn(encoding string, reader io.Reader, writer io.Writer) BoltConn {
+	input := LookupInput(encoding, reader)
+	output := LookupOutput(encoding, writer)
+	return NewBoltConn(input, output)
+}
+
+func LookupSpoutConn(encoding string, reader io.Reader, writer io.Writer) SpoutConn {
+	input := LookupInput(encoding, reader)
+	output := LookupOutput(encoding, writer)
+	return NewSpoutConn(input, output)
 }

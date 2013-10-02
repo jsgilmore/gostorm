@@ -23,7 +23,7 @@ type BoltConn interface {
     Emit(anchors []string, stream string, content ...interface{}) (taskIds []int)
     EmitDirect(anchors []string, stream string, directTask int, contents ...interface{})
 }
- 
+
 // SpoutConn is the interface that implements the possible spout actions
 type SpoutConn interface {
     Initialise()
@@ -47,7 +47,7 @@ import (
     "io"
     "os"
 )
- 
+
 func getBoltConn(encoding string, reader io.Reader) (boltConn gostorm.BoltConn) {
     inputFactory := stormenc.LookupInput(encoding)
     outputFactory := stormenc.LookupOutput(encoding)
@@ -73,7 +73,7 @@ import (
     stormjson "github.com/jsgilmore/gostorm/encoding/json"
     "os"
 )
- 
+
 func getBoltConn() (boltConn gostorm.BoltConn) {
     input := stormjson.NewJsonEncodedInput(os.Stdin)
     output := stormjson.NewJsonEncodedOutput(os.Stdout)
@@ -98,7 +98,7 @@ func (this *myBolt) Run() {
         } else if err != nil {
             panic(err)
         }
-        
+
         this.Event(id, msg)
     }
 }
@@ -135,11 +135,11 @@ Tuple emissions may be anchored to received tuples. This specifies that the curr
 
 If you bolt only has one output stream, you can just use the "default" string, or the empty ("") string. You will see where streams come in to the picture when we define a topology.
 
-A union message type is always emitted (myBoltEvent). The union message contains pointers to all the message types that our bolt can emit. Whenever a message is emitted, it is first placed in the union message structure. This way, the received always knows what message type to cast to and can then check for a non-nil element in the union message. 
+A union message type is always emitted (myBoltEvent). The union message contains pointers to all the message types that our bolt can emit. Whenever a message is emitted, it is first placed in the union message structure. This way, the received always knows what message type to cast to and can then check for a non-nil element in the union message.
 
-The last two objects in the Emit call are the contents of the message that will be transferred to the receiving bolt in the form that they are Emitted here. It is possible to specify any number of objects. In the above example, we specified a ket and a message. The first field will be used to group tuples on as part of a fieldsGrouping that will be shown when the topology definition is shown. 
+The last two objects in the Emit call are the contents of the message that will be transferred to the receiving bolt in the form that they are Emitted here. It is possible to specify any number of objects. In the above example, we specified a ket and a message. The first field will be used to group tuples on as part of a fieldsGrouping that will be shown when the topology definition is shown.
 
-To ensure the "at least once" processing semantics of Storm, every tuple that is receive should be acknowledged, either by an Ack or a Fail. This is done by the SendAck and SendFail functions that is part of the boltConn interface. To enable Storm to build up its ack directed acyclic graph (DAG): no emission may be anchored to a tuple that has already been acked. The Storm topology will panic if this occurs. 
+To ensure the "at least once" processing semantics of Storm, every tuple that is receive should be acknowledged, either by an Ack or a Fail. This is done by the SendAck and SendFail functions that is part of the boltConn interface. To enable Storm to build up its ack directed acyclic graph (DAG): no emission may be anchored to a tuple that has already been acked. The Storm topology will panic if this occurs.
 
 #Spout usage
 
@@ -154,14 +154,14 @@ func (this *mySpoutImpl) Emit(msg interface{}) {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	switch spoutMsg.Command {
 	case "next":
 		this.spoutConn.Emit(generateId(), "", msg)
-  	case "ack":
+	case "ack":
     		this.spoutConn.Emit(generateId(), "", msg)
     		handleAck(spoutMsg)
-  	case "fail":
+	case "fail":
     		this.spoutConn.Emit(generateId(), "", msg)
     		handleFail(spoutMsg)
 	default:

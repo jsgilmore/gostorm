@@ -20,7 +20,8 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
-	"github.com/jsgilmore/gostorm/encoding"
+	"github.com/jsgilmore/gostorm/core"
+	"github.com/jsgilmore/gostorm/messages"
 	"io"
 	"log"
 )
@@ -53,7 +54,7 @@ func (this *jsonInput) readData() (data []byte, err error) {
 	}
 
 	// Remove the newline character
-	data = bytes.Trim(data, "\n")
+	data = bytes.TrimRight(data, "\n")
 	return data, nil
 }
 
@@ -74,13 +75,13 @@ func (this *jsonInput) ReadMsg(msg interface{}) (err error) {
 
 	err = json.Unmarshal(data, msg)
 	if err != nil {
-		log.Printf("Gostorm json encoding: Unmarshalling: %s", data)
+		log.Printf("core json: Unmarshalling: %s", data)
 		return err
 	}
 	return nil
 }
 
-func (this *jsonInput) ReadTaskIds() (taskIds []int) {
+func (this *jsonInput) ReadTaskIds() (taskIds []int32) {
 	// Read a single json record from the input file
 	data, err := this.readData()
 	if err != nil {
@@ -100,17 +101,17 @@ func (this *jsonInput) ReadTaskIds() (taskIds []int) {
 	return taskIds
 }
 
-func NewJsonObjectInputFactory() encoding.InputFactory {
+func NewJsonObjectInputFactory() core.InputFactory {
 	return &jsonObjectInputFactory{}
 }
 
 type jsonObjectInputFactory struct{}
 
-func (this *jsonObjectInputFactory) NewInput(reader io.Reader) encoding.Input {
+func (this *jsonObjectInputFactory) NewInput(reader io.Reader) core.Input {
 	return NewJsonObjectInput(reader)
 }
 
-func NewJsonObjectInput(reader io.Reader) encoding.Input {
+func NewJsonObjectInput(reader io.Reader) core.Input {
 	return &jsonObjectInput{
 		jsonInput: newJsonInput(reader),
 	}
@@ -121,7 +122,7 @@ type jsonObjectInput struct {
 }
 
 // ConstructInput for object json returns a list of objects into which json objects should be unmarshalled
-func (this *jsonObjectInput) ConstructInput(contents ...interface{}) []interface{} {
+func (this *jsonObjectInput) constructInput(contents ...interface{}) []interface{} {
 	contentList := make([]interface{}, len(contents))
 	for i, content := range contents {
 		contentList[i] = content
@@ -129,21 +130,34 @@ func (this *jsonObjectInput) ConstructInput(contents ...interface{}) []interface
 	return contentList
 }
 
-func (this *jsonObjectInput) DecodeInput(contentList []interface{}, contentStructs ...interface{}) {
+// ReadTuple reads a tuple from Storm of which the contents are known
+// and decodes the contents into the provided list of structs
+func (this *jsonObjectInput) ReadTuple(contentStructs ...interface{}) (metadata *messages.TupleMetadata, err error) {
+	tuple := &messages.TupleMsg{
+		TupleJson: &messages.TupleJson{
+			Contents: this.constructInput(contentStructs...),
+		},
+	}
 
+	err = this.ReadMsg(tuple)
+	if err != nil {
+		return nil, err
+	}
+
+	return tuple.TupleJson.TupleMetadata, nil
 }
 
-func NewJsonEncodedInputFactory() encoding.InputFactory {
+func NewJsonEncodedInputFactory() core.InputFactory {
 	return &jsonEncodedInputFactory{}
 }
 
 type jsonEncodedInputFactory struct{}
 
-func (this *jsonEncodedInputFactory) NewInput(reader io.Reader) encoding.Input {
+func (this *jsonEncodedInputFactory) NewInput(reader io.Reader) core.Input {
 	return NewJsonEncodedInput(reader)
 }
 
-func NewJsonEncodedInput(reader io.Reader) encoding.Input {
+func NewJsonEncodedInput(reader io.Reader) core.Input {
 	return &jsonEncodedInput{
 		jsonInput: newJsonInput(reader),
 	}
@@ -154,7 +168,7 @@ type jsonEncodedInput struct {
 }
 
 // ConstructInput for encoded json returns a list of bytes into which marshalled json should be written
-func (this *jsonEncodedInput) ConstructInput(contents ...interface{}) []interface{} {
+func (this *jsonEncodedInput) constructInput(contents ...interface{}) []interface{} {
 	contentList := make([]interface{}, len(contents))
 	for i := 0; i < len(contents); i++ {
 		contentList[i] = &[]byte{}
@@ -162,13 +176,30 @@ func (this *jsonEncodedInput) ConstructInput(contents ...interface{}) []interfac
 	return contentList
 }
 
-func (this *jsonEncodedInput) DecodeInput(contentList []interface{}, contentStructs ...interface{}) {
+func (this *jsonEncodedInput) decodeInput(contentList []interface{}, contentStructs ...interface{}) {
 	for i, content := range contentStructs {
 		err := json.Unmarshal(*contentList[i].(*[]byte), content)
 		if err != nil {
 			panic(err)
 		}
 	}
+}
+
+// ReadTuple reads a tuple from Storm of which the contents are known
+// and decodes the contents into the provided list of structs
+func (this *jsonEncodedInput) ReadTuple(contentStructs ...interface{}) (metadata *messages.TupleMetadata, err error) {
+	tuple := &messages.TupleMsg{
+		TupleJson: &messages.TupleJson{
+			Contents: this.constructInput(contentStructs...),
+		},
+	}
+	err = this.ReadMsg(tuple)
+	if err != nil {
+		return nil, err
+	}
+
+	this.decodeInput(tuple.TupleJson.Contents, contentStructs...)
+	return tuple.TupleJson.TupleMetadata, nil
 }
 
 func newJsonOutput(writer io.Writer) *jsonOutput {
@@ -182,13 +213,6 @@ type jsonOutput struct {
 }
 
 // sendMsg sends the contents of a known Storm message to Storm
-func (this *jsonOutput) SendEncoded(msg string) {
-	fmt.Fprintln(this.writer, msg)
-	// Storm requires that every message be suffixed with an "end" string
-	fmt.Fprintln(this.writer, "end")
-}
-
-// sendMsg sends the contents of a known Storm message to Storm
 func (this *jsonOutput) SendMsg(msg interface{}) {
 	data, err := json.Marshal(msg)
 	if err != nil {
@@ -199,17 +223,17 @@ func (this *jsonOutput) SendMsg(msg interface{}) {
 	fmt.Fprintln(this.writer, "end")
 }
 
-func NewJsonEncodedOutputFactory() encoding.OutputFactory {
+func NewJsonEncodedOutputFactory() core.OutputFactory {
 	return &jsonEncodedOutputFactory{}
 }
 
 type jsonEncodedOutputFactory struct{}
 
-func (this *jsonEncodedOutputFactory) NewOutput(writer io.Writer) encoding.Output {
+func (this *jsonEncodedOutputFactory) NewOutput(writer io.Writer) core.Output {
 	return NewJsonEncodedOutput(writer)
 }
 
-func NewJsonEncodedOutput(writer io.Writer) encoding.Output {
+func NewJsonEncodedOutput(writer io.Writer) core.Output {
 	return &jsonEncodedOutput{
 		jsonOutput: newJsonOutput(writer),
 	}
@@ -219,7 +243,7 @@ type jsonEncodedOutput struct {
 	*jsonOutput
 }
 
-func (this *jsonEncodedOutput) ConstructOutput(contents ...interface{}) []interface{} {
+func (this *jsonEncodedOutput) constructOutput(contents ...interface{}) []interface{} {
 	contentList := make([]interface{}, len(contents))
 	for i, content := range contents {
 		encoded, err := json.Marshal(content)
@@ -231,17 +255,34 @@ func (this *jsonEncodedOutput) ConstructOutput(contents ...interface{}) []interf
 	return contentList
 }
 
-func NewJsonObjectOutputFactory() encoding.OutputFactory {
+func (this *jsonEncodedOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{}) {
+	emission := &messages.Emission{
+		EmissionProto: &messages.EmissionProto{
+			EmissionMetadata: &messages.EmissionMetadata{
+				Command: command,
+				Anchors: anchors,
+				Id:      &id,
+				Stream:  &stream,
+				Task:    &directTask,
+				Msg:     &msg,
+			},
+		},
+		ContentsJson: this.constructOutput(contents...),
+	}
+	this.SendMsg(emission)
+}
+
+func NewJsonObjectOutputFactory() core.OutputFactory {
 	return &jsonObjectOutputFactory{}
 }
 
 type jsonObjectOutputFactory struct{}
 
-func (this *jsonObjectOutputFactory) NewOutput(writer io.Writer) encoding.Output {
+func (this *jsonObjectOutputFactory) NewOutput(writer io.Writer) core.Output {
 	return NewJsonObjectOutput(writer)
 }
 
-func NewJsonObjectOutput(writer io.Writer) encoding.Output {
+func NewJsonObjectOutput(writer io.Writer) core.Output {
 	return &jsonObjectOutput{
 		jsonOutput: newJsonOutput(writer),
 	}
@@ -251,7 +292,7 @@ type jsonObjectOutput struct {
 	*jsonOutput
 }
 
-func (this *jsonObjectOutput) ConstructOutput(contents ...interface{}) []interface{} {
+func (this *jsonObjectOutput) constructOutput(contents ...interface{}) []interface{} {
 	contentList := make([]interface{}, len(contents))
 	for i, content := range contents {
 		contentList[i] = content
@@ -259,10 +300,27 @@ func (this *jsonObjectOutput) ConstructOutput(contents ...interface{}) []interfa
 	return contentList
 }
 
-func init() {
-	encoding.RegisterInput("jsonEncoded", NewJsonEncodedInputFactory())
-	encoding.RegisterInput("jsonObject", NewJsonObjectInputFactory())
+func (this *jsonObjectOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{}) {
+	emission := &messages.Emission{
+		EmissionProto: &messages.EmissionProto{
+			EmissionMetadata: &messages.EmissionMetadata{
+				Command: command,
+				Anchors: anchors,
+				Id:      &id,
+				Stream:  &stream,
+				Task:    &directTask,
+				Msg:     &msg,
+			},
+		},
+		ContentsJson: this.constructOutput(contents...),
+	}
+	this.SendMsg(emission)
+}
 
-	encoding.RegisterOutput("jsonEncoded", NewJsonEncodedOutputFactory())
-	encoding.RegisterOutput("jsonObject", NewJsonObjectOutputFactory())
+func init() {
+	core.RegisterInput("jsonEncoded", NewJsonEncodedInputFactory())
+	core.RegisterInput("jsonObject", NewJsonObjectInputFactory())
+
+	core.RegisterOutput("jsonEncoded", NewJsonEncodedOutputFactory())
+	core.RegisterOutput("jsonObject", NewJsonObjectOutputFactory())
 }

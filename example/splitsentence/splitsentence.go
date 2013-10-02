@@ -16,8 +16,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/jsgilmore/gostorm"
-	stormjson "github.com/jsgilmore/gostorm/encoding/json"
+	"github.com/jsgilmore/gostorm/core"
+	jsonencoding "github.com/jsgilmore/gostorm/encodings/json"
 	"log"
 	"os"
 	"os/signal"
@@ -33,7 +33,7 @@ func handleSigTerm() {
 	os.Exit(1)
 }
 
-func emitWords(sentance, id string, boltConn gostorm.BoltConn) {
+func emitWords(sentance, id string, boltConn core.BoltConn) {
 	words := strings.Split(sentance, " ")
 	for _, word := range words {
 		boltConn.Emit([]string{id}, "", word)
@@ -59,10 +59,10 @@ func main() {
 		}
 	}()
 
-	input := stormjson.NewJsonObjectInput(os.Stdin)
-	output := stormjson.NewJsonObjectOutput(os.Stdout)
-	boltConn := gostorm.NewBoltConn(input, output)
-	boltConn.Initialise()
+	input := jsonencoding.NewJsonObjectInput(os.Stdin)
+	output := jsonencoding.NewJsonObjectOutput(os.Stdout)
+	boltConn := core.NewBoltConn(input, output)
+	boltConn.Connect()
 
 	for {
 		var sentence string
