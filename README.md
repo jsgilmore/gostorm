@@ -63,9 +63,7 @@ Usually, you will be writing Storm bolts, so I shall focus on how to use GoStorm
 ```go
 import (
     "github.com/jsgilmore/gostorm"
-    _ "github.com/jsgilmore/gostorm/encoding/hybrid"
-    _ "github.com/jsgilmore/gostorm/encoding/json"
-    _ "github.com/jsgilmore/gostorm/encoding/protobuf"
+    _ "github.com/jsgilmore/gostorm/encodings"
     "io"
 )
 
@@ -76,7 +74,7 @@ func getBoltConn(encoding string, reader io.Reader, writer io.Writer) (boltConn 
 }
 ```
 
-The GoStorm library makes use of a registry pattern, where each encoding registers itself with GoStorm. The storm developer can use the lookup functions to retrieve spout and bolt conns with the required encoding. It should be noted that for an encoding to be available for lookup, it still has to be imported as:  _ "github.com/jsgilmore/gostorm/encoding/json". As shown in the above example. You only have to import the encodings that you will be using.
+The GoStorm library makes use of a registry pattern, where each encoding registers itself with GoStorm. The storm developer can use the lookup functions to retrieve spout and bolt conns with the required encoding. It should be noted that for an encoding to be available for lookup, it still has to be imported as:  _ "github.com/jsgilmore/gostorm/encoding/json". Or you can import all available encodings using: _ "github.com/jsgilmore/gostorm/encodings", as shown in the above example.
 
 Input encodings require an io.Reader and output encodings require an io.Writer. This is the interface over which it will try to communicate. For standard Storm functionality, these are os.Stdin and os.Stdout. Always ensure that the boltConn is Initialised, before you start using it. It will panic otherwise. During initialisation, the boltConn connects to Storm and performs various setup functions with Storm (like obtaining the topology configuration and communicating its pid).
 
