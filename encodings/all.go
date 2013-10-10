@@ -1,4 +1,4 @@
-package encodings
+package all
 
 import (
 	_ "github.com/jsgilmore/gostorm/encodings/hybrid"
