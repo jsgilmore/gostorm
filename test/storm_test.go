@@ -145,8 +145,13 @@ func TestInit(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
+<<<<<<< HEAD:test/storm_test.go
 	boltConn := stormcore.NewBoltConn(input, output)
 	boltConn.Connect()
+=======
+	boltConn := gostorm.NewBoltConn(input, output)
+	boltConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	expectPid(outBuffer, t)
 
@@ -160,8 +165,13 @@ func TestLog(t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
+<<<<<<< HEAD:test/storm_test.go
 	spoutConn := stormcore.NewSpoutConn(input, output)
 	spoutConn.Connect()
+=======
+	spoutConn := gostorm.NewSpoutConn(input, output)
+	spoutConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	expectPid(outBuffer, t)
 
@@ -193,8 +203,13 @@ func TestReadTuple(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(buffer)
 	output := stormenc.NewJsonObjectOutput(os.Stdout)
+<<<<<<< HEAD:test/storm_test.go
 	boltConn := stormcore.NewBoltConn(input, output)
 	boltConn.Connect()
+=======
+	boltConn := gostorm.NewBoltConn(input, output)
+	boltConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	var msg string
 	for i := 0; i < 6; i++ {
@@ -215,8 +230,13 @@ func TestSendAck(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
+<<<<<<< HEAD:test/storm_test.go
 	boltConn := stormcore.NewBoltConn(input, output)
 	boltConn.Connect()
+=======
+	boltConn := gostorm.NewBoltConn(input, output)
+	boltConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	var ids []string
 	for i := 0; i < 1000; i++ {
@@ -244,8 +264,13 @@ func TestSendFail(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
+<<<<<<< HEAD:test/storm_test.go
 	boltConn := stormcore.NewBoltConn(input, output)
 	boltConn.Connect()
+=======
+	boltConn := gostorm.NewBoltConn(input, output)
+	boltConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	var ids []string
 	for i := 0; i < 1000; i++ {
@@ -304,8 +329,15 @@ func testBoltEmit(taskIdsList [][]int32, inBuffer io.Reader, t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
+<<<<<<< HEAD:test/storm_test.go
 	boltConn := stormcore.NewBoltConn(input, output)
 	boltConn.Connect()
+
+	expectPid(outBuffer, t)
+=======
+	boltConn := gostorm.NewBoltConn(input, output)
+	boltConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	expectPid(outBuffer, t)
 
@@ -420,8 +452,13 @@ func TestReadMsg(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(buffer)
 	output := stormenc.NewJsonObjectOutput(os.Stdout)
+<<<<<<< HEAD:test/storm_test.go
 	spoutConn := stormcore.NewSpoutConn(input, output)
 	spoutConn.Connect()
+=======
+	spoutConn := gostorm.NewSpoutConn(input, output)
+	spoutConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	for i := 0; i < 6; i++ {
 		command, id, err := spoutConn.ReadSpoutMsg()
@@ -443,8 +480,13 @@ func TestSendSync(t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
+<<<<<<< HEAD:test/storm_test.go
 	spoutConn := stormcore.NewSpoutConn(input, output)
 	spoutConn.Connect()
+=======
+	spoutConn := gostorm.NewSpoutConn(input, output)
+	spoutConn.Initialise()
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:test/storm_test.go
 
 	expectPid(outBuffer, t)
 

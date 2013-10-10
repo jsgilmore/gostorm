@@ -56,7 +56,11 @@ func (this *testObj) Equal(that *testObj) bool {
 	return true
 }
 
+<<<<<<< HEAD:encodings/json/json_test.go
 func testReadMsg(buffer *bytes.Buffer, input stormcore.Input, t *testing.T) {
+=======
+func testReadMsg(buffer *bytes.Buffer, input gostorm.Input, t *testing.T) {
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:encoding/json/json_test.go
 	//Test sending some ints
 	for i := 0; i < 100; i++ {
 		name := fmt.Sprintf("%d", i)
@@ -141,7 +145,11 @@ func expect(expected string, buffer *bytes.Buffer, t *testing.T) {
 	}
 }
 
+<<<<<<< HEAD:encodings/json/json_test.go
 func testSendMsg(buffer *bytes.Buffer, output stormcore.Output, t *testing.T) {
+=======
+func testSendMsg(buffer *bytes.Buffer, output gostorm.Output, t *testing.T) {
+>>>>>>> dbd112e4d57202eb5b06a1f8579685568fd32c74:encoding/json/json_test.go
 	for i := 0; i < 100; i++ {
 		msg := fmt.Sprintf("%d", rand.Int63())
 		output.SendMsg(msg)
