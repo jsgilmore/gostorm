@@ -15,6 +15,7 @@
 package gostorm
 
 import (
+	"check"
 	"github.com/jsgilmore/gostorm/core"
 	"io"
 	"sync"
@@ -54,9 +55,7 @@ func (this *shellBoltImpl) Go() {
 			this.Exit()
 			return
 		}
-		if err != nil {
-			panic(err)
-		}
+		check.Error(err)
 		this.bolt.Execute(meta, fields...)
 	}
 }

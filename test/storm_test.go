@@ -309,8 +309,6 @@ func testBoltEmit(taskIdsList [][]int32, inBuffer io.Reader, t *testing.T) {
 
 	expectPid(outBuffer, t)
 
-	expectPid(outBuffer, t)
-
 	var msg string
 	for i := 0; i < 6; i++ {
 		meta, err := boltConn.ReadTuple(&msg)
