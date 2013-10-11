@@ -62,13 +62,13 @@ type SpoutConn interface {
 Usually, you will be writing Storm bolts, so I shall focus on how to use GoStorm to write bolts. Firstly, you need to create the required boltConn. The most flexible way to do this is:
 ```go
 import (
-    "github.com/jsgilmore/gostorm"
+    stormcore "github.com/jsgilmore/gostorm/core"
     _ "github.com/jsgilmore/gostorm/encodings/all"
     "io"
 )
 
-func getBoltConn(encoding string, reader io.Reader, writer io.Writer) (boltConn gostorm.BoltConn) {
-	boltConn = gostorm.LookupBoltConn(encoding, reader, writer)
+func getBoltConn(encoding string, reader io.Reader, writer io.Writer) (boltConn stormcore.BoltConn) {
+	boltConn = stormcore.LookupBoltConn(encoding, reader, writer)
 	boltConn.Initialise()
 	return
 }
@@ -81,15 +81,15 @@ Input encodings require an io.Reader and output encodings require an io.Writer. 
 A more explicit way to create a BoltConn is:
 ```go
 import (
-    "github.com/jsgilmore/gostorm"
+    stormcore "github.com/jsgilmore/gostorm/core"
     stormjson "github.com/jsgilmore/gostorm/encoding/json"
     "os"
 )
 
-func getBoltConn() (boltConn gostorm.BoltConn) {
+func getBoltConn() (boltConn stormcore.BoltConn) {
     input := stormjson.NewJsonEncodedInput(os.Stdin)
     output := stormjson.NewJsonEncodedOutput(os.Stdout)
-    boltConn := gostorm.NewBoltConn(input, output)
+    boltConn := stormcore.NewBoltConn(input, output)
     boltConn.Initialise()
 }
 ```

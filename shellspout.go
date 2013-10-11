@@ -15,7 +15,6 @@
 package gostorm
 
 import (
-	"check"
 	"github.com/jsgilmore/gostorm/core"
 	"io"
 	"sync"
@@ -53,7 +52,9 @@ func (this *shellSpoutImpl) Go() {
 			this.Exit()
 			return
 		}
-		check.Error(err)
+		if err != nil {
+			panic(err)
+		}
 
 		switch command {
 		case "next":
