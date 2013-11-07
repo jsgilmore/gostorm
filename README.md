@@ -243,3 +243,6 @@ Because mock conns do not connect to a real Storm topology and because the mock 
 10. Logging a message prints the log message to stdout.
 11. EmitDirect works the same as Emit (i.e. sends the object directly to the consumer).
 12. A spout sending a sync does nothing.
+
+[![Coverage Status](https://coveralls.io/repos/jsgilmore/gostorm/badge.png)](https://coveralls.io/r/jsgilmore/gostorm)
+
