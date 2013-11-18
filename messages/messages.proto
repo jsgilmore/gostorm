@@ -1,7 +1,6 @@
 package messages;
 
 import "code.google.com/p/gogoprotobuf/gogoproto/gogo.proto";
-import "next/gogoprotobuf/nextproto/next.proto";
 
 option (gogoproto.verbose_equal_all) = true;
 option (gogoproto.equal_all) = true;
