@@ -89,17 +89,20 @@ func TestEmitGeneric(t *testing.T) {
 	output := NewProtobufOutput(buffer)
 	input := NewProtobufInput(buffer)
 
+	needTaskIds := true
+
 	for i := 0; i < 100; i++ {
 		num := rand.Int63()
 		numStr := fmt.Sprintf("%d", num)
 		outMsg := newTestObj(numStr, num, []byte(numStr))
 		outMeta := &messages.ShellMsgMeta{
-			Command: "emit",
-			Anchors: []string{"1", "2"},
-			Id:      &numStr,
-			Stream:  &numStr,
-			Task:    &num,
-			Msg:     &numStr,
+			Command:     "emit",
+			Anchors:     []string{"1", "2"},
+			Id:          &numStr,
+			Stream:      &numStr,
+			Task:        &num,
+			NeedTaskIds: &needTaskIds,
+			Msg:         &numStr,
 		}
 		output.EmitGeneric(outMeta.Command, outMeta.GetId(), outMeta.GetStream(), outMeta.GetMsg(), outMeta.GetAnchors(), outMeta.GetTask(), outMsg)
 
