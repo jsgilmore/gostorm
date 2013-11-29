@@ -16,119 +16,87 @@ package gostorm
 
 import (
 	"fmt"
-	gostorm "github.com/jsgilmore/gostorm/core"
-	"github.com/jsgilmore/gostorm/messages"
-	"log"
+	"github.com/jsgilmore/gostorm"
+	stormmsg "github.com/jsgilmore/gostorm/messages"
 )
 
-type Consumer interface {
-	Event(msgs ...interface{})
-}
-
-type Runner interface {
-	Run()
-}
-
-func NewPrinter() Consumer {
+func NewPrinter() gostorm.Bolt {
 	return &printer{}
 }
 
 type printer struct{}
 
-func (this *printer) Event(msgs ...interface{}) {
-	for _, msg := range msgs {
-		fmt.Printf("%v\n", msg)
+func (this *printer) Execute(meta stormmsg.BoltMsgMeta, fields ...interface{}) {
+	for _, field := range fields {
+		fmt.Printf("%v\n", field)
 	}
 }
 
-type context struct{}
+func (this *printer) Prepare(context *stormmsg.Context, collector gostorm.OutputCollector) {
 
-type tupleMetaData struct{}
-
-// NewBoltConn returns a Storm bolt connection that a Go bolt can use to communicate with Storm
-func NewMockBoltConn(consumer Consumer) gostorm.BoltConn {
-	boltConn := &mockBoltConnImpl{
-		consumer: consumer,
-	}
-	return boltConn
 }
 
-type mockBoltConnImpl struct {
-	consumer Consumer
+func (this *printer) Cleanup() {
+
 }
 
-func (this *mockBoltConnImpl) Context() *messages.Context {
+func (this *printer) Fields() []interface{} {
 	return nil
 }
 
-func (this *mockBoltConnImpl) sendMsg(msg interface{}) {
-	this.consumer.Event(msg)
+// NewBoltConn returns a Storm bolt connection that a Go bolt can use to communicate with Storm
+func NewMockOutputCollector(bolt gostorm.Bolt) gostorm.OutputCollector {
+	outputCollector := &mockOutputCollectorImpl{
+		bolt: bolt,
+	}
+	return outputCollector
 }
 
-func (this *mockBoltConnImpl) Log(text string) {
-	log.Println(text)
+type mockOutputCollectorImpl struct {
+	bolt gostorm.Bolt
 }
 
-func (this *mockBoltConnImpl) Connect() {
-	// A mock boltConn does not have a context
+func (this *mockOutputCollectorImpl) SendAck(id string) {
+	this.EmitDirect(nil, "", 0, "Ack:"+id)
 }
 
-func (this *mockBoltConnImpl) ReadTuple(contentStructs ...interface{}) (meta *messages.TupleMetadata, err error) {
-	return nil, nil
+func (this *mockOutputCollectorImpl) SendFail(id string) {
+	this.EmitDirect(nil, "", 0, "Fail:"+id)
 }
 
-func (this *mockBoltConnImpl) SendAck(id string) {
-	this.sendMsg("Ack:" + id)
-}
-
-func (this *mockBoltConnImpl) SendFail(id string) {
-	this.sendMsg("Fail:" + id)
-}
-
-func (this *mockBoltConnImpl) Emit(anchors []string, stream string, contents ...interface{}) (taskIds []int32) {
-	this.consumer.Event(contents...)
+func (this *mockOutputCollectorImpl) Emit(anchors []string, stream string, contents ...interface{}) (taskIds []int32) {
+	this.EmitDirect(anchors, stream, 0, contents...)
 	return []int32{1}
 }
 
-func (this *mockBoltConnImpl) EmitDirect(anchors []string, stream string, directTask int64, contents ...interface{}) {
-	this.consumer.Event(contents...)
+func (this *mockOutputCollectorImpl) EmitDirect(anchors []string, stream string, directTask int64, contents ...interface{}) {
+	meta := stormmsg.BoltMsgMeta{
+		Stream: stream,
+	}
+	this.bolt.Execute(meta, contents...)
 }
 
 // NewBoltConn returns a Storm bolt connection that a Go bolt can use to communicate with Storm
-func NewMockSpoutConn(consumer Consumer) gostorm.SpoutConn {
-	spoutConn := &mockSpoutConnImpl{
-		consumer: consumer,
+func NewMockSpoutOutputCollector(bolt gostorm.Bolt) gostorm.SpoutOutputCollector {
+	spoutOutputCollector := &mockSpoutSpoutOutputCollectorImpl{
+		bolt: bolt,
 	}
-	return spoutConn
+	return spoutOutputCollector
 }
 
-type mockSpoutConnImpl struct {
-	consumer Consumer
+type mockSpoutSpoutOutputCollectorImpl struct {
+	bolt gostorm.Bolt
 }
 
-func (this *mockSpoutConnImpl) Context() *messages.Context {
-	return nil
-}
-
-func (this *mockSpoutConnImpl) Log(text string) {
-	this.consumer.Event(text)
-}
-
-func (this *mockSpoutConnImpl) Connect() {
-	// A mock boltConn does not have a context
-}
-
-func (this *mockSpoutConnImpl) ReadSpoutMsg() (command, id string, err error) {
-	return "next", "", nil
-}
-
-func (this *mockSpoutConnImpl) SendSync() {}
-
-func (this *mockSpoutConnImpl) Emit(id string, stream string, contents ...interface{}) (taskIds []int32) {
-	this.consumer.Event(contents...)
+func (this *mockSpoutSpoutOutputCollectorImpl) Emit(id string, stream string, contents ...interface{}) (taskIds []int32) {
+	this.EmitDirect(id, stream, 0, contents...)
 	return []int32{1}
 }
 
-func (this *mockSpoutConnImpl) EmitDirect(id string, stream string, directTask int64, contents ...interface{}) {
-	this.consumer.Event(contents...)
+func (this *mockSpoutSpoutOutputCollectorImpl) EmitDirect(id string, stream string, directTask int64, contents ...interface{}) {
+	meta := stormmsg.BoltMsgMeta{
+		Id:     id,
+		Stream: stream,
+	}
+	this.bolt.Execute(meta, contents...)
 }

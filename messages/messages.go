@@ -108,30 +108,30 @@ func (this *Pid) MarshalJSON() ([]byte, error) {
 //	// All the values in this tuple
 //	"tuple": ["snow white and the seven dwarfs", "field2", 3]
 //  }
-type TupleJson struct {
-	*TupleMetadata
+type BoltMsgJson struct {
+	*BoltMsgMeta
 	Contents []interface{} `json:"tuple"`
 }
 
-type TupleMsg struct {
-	*TupleProto
-	TupleJson *TupleJson
+type BoltMsg struct {
+	*BoltMsgProto
+	BoltMsgJson *BoltMsgJson
 }
 
-func (this *TupleMsg) MarshalJSON() ([]byte, error) {
-	contents, err := json.Marshal(this.TupleJson.Contents)
+func (this *BoltMsg) MarshalJSON() ([]byte, error) {
+	contents, err := json.Marshal(this.BoltMsgJson.Contents)
 	if err != nil {
 		panic(err)
 	}
-	id := this.TupleJson.Id
-	comp := this.TupleJson.Comp
-	stream := this.TupleJson.Stream
-	task := this.TupleJson.Task
+	id := this.BoltMsgJson.Id
+	comp := this.BoltMsgJson.Comp
+	stream := this.BoltMsgJson.Stream
+	task := this.BoltMsgJson.Task
 	return []byte(fmt.Sprintf(`{"id": "%s", "comp": "%s", "stream": "%s", "task": %d, "tuple": %s}`, id, comp, stream, task, contents)), nil
 }
 
-func (this *TupleMsg) UnmarshalJSON(data []byte) error {
-	err := json.Unmarshal(data, this.TupleJson)
+func (this *BoltMsg) UnmarshalJSON(data []byte) error {
+	err := json.Unmarshal(data, this.BoltMsgJson)
 	if err != nil {
 		return err
 	}
@@ -187,49 +187,54 @@ func (this *SpoutMsg) MarshalJSON() ([]byte, error) {
 //	"tuple": ["field1", 2, 3]
 //  }
 
-type Emission struct {
-	*EmissionProto
-	ContentsJson []interface{} `json:"tuple"`
+type ShellMsgJson struct {
+	*ShellMsgMeta
+	Contents []interface{} `json:"tuple"`
 }
 
-func (this *Emission) MarshalJSON() ([]byte, error) {
+type ShellMsg struct {
+	*ShellMsgProto
+	ShellMsgJson *ShellMsgJson
+}
+
+func (this *ShellMsg) MarshalJSON() ([]byte, error) {
 	var emissionStrings []string
 	var emissionStr string
 
-	emissionStr = fmt.Sprintf(`{"command": "%s"`, this.EmissionMetadata.Command)
+	emissionStr = fmt.Sprintf(`{"command": "%s"`, this.ShellMsgJson.ShellMsgMeta.Command)
 	emissionStrings = append(emissionStrings, emissionStr)
 
-	if len(this.EmissionMetadata.GetId()) > 0 {
-		emissionStr = fmt.Sprintf(`, "id": "%s"`, this.EmissionMetadata.GetId())
+	if len(this.ShellMsgJson.ShellMsgMeta.GetId()) > 0 {
+		emissionStr = fmt.Sprintf(`, "id": "%s"`, this.ShellMsgJson.ShellMsgMeta.GetId())
 		emissionStrings = append(emissionStrings, emissionStr)
 	}
 
-	if len(this.EmissionMetadata.GetAnchors()) > 0 {
-		emissionStr = fmt.Sprintf(`, "anchors": ["%s"`, this.EmissionMetadata.Anchors[0])
+	if len(this.ShellMsgJson.ShellMsgMeta.GetAnchors()) > 0 {
+		emissionStr = fmt.Sprintf(`, "anchors": ["%s"`, this.ShellMsgJson.ShellMsgMeta.Anchors[0])
 		emissionStrings = append(emissionStrings, emissionStr)
-		for i := 1; i < len(this.EmissionMetadata.Anchors); i++ {
-			emissionStr = fmt.Sprintf(`, "%s"`, this.EmissionMetadata.Anchors[i])
+		for i := 1; i < len(this.ShellMsgJson.ShellMsgMeta.Anchors); i++ {
+			emissionStr = fmt.Sprintf(`, "%s"`, this.ShellMsgJson.ShellMsgMeta.Anchors[i])
 			emissionStrings = append(emissionStrings, emissionStr)
 		}
 		emissionStr = `]`
 		emissionStrings = append(emissionStrings, emissionStr)
 	}
 
-	if len(this.EmissionMetadata.GetStream()) > 0 {
-		emissionStr = fmt.Sprintf(`, "stream": "%s"`, this.EmissionMetadata.GetStream())
+	if len(this.ShellMsgJson.ShellMsgMeta.GetStream()) > 0 {
+		emissionStr = fmt.Sprintf(`, "stream": "%s"`, this.ShellMsgJson.ShellMsgMeta.GetStream())
 		emissionStrings = append(emissionStrings, emissionStr)
 	}
-	if this.EmissionMetadata.GetTask() != 0 {
-		emissionStr = fmt.Sprintf(`, "task": %d`, this.EmissionMetadata.GetTask())
+	if this.ShellMsgJson.ShellMsgMeta.GetTask() != 0 {
+		emissionStr = fmt.Sprintf(`, "task": %d`, this.ShellMsgJson.ShellMsgMeta.GetTask())
 		emissionStrings = append(emissionStrings, emissionStr)
 	}
-	if len(this.EmissionMetadata.GetMsg()) > 0 {
-		emissionStr = fmt.Sprintf(`, "msg": "%s"`, this.EmissionMetadata.GetMsg())
+	if len(this.ShellMsgJson.ShellMsgMeta.GetMsg()) > 0 {
+		emissionStr = fmt.Sprintf(`, "msg": "%s"`, this.ShellMsgJson.ShellMsgMeta.GetMsg())
 		emissionStrings = append(emissionStrings, emissionStr)
 	}
 
-	if len(this.ContentsJson) > 0 {
-		contents, err := json.Marshal(this.ContentsJson)
+	if len(this.ShellMsgJson.Contents) > 0 {
+		contents, err := json.Marshal(this.ShellMsgJson.Contents)
 		if err != nil {
 			panic(err)
 		}
@@ -240,4 +245,12 @@ func (this *Emission) MarshalJSON() ([]byte, error) {
 	emissionStrings = append(emissionStrings, emissionStr)
 
 	return []byte(strings.Join(emissionStrings, "")), nil
+}
+
+func (this *ShellMsg) UnmarshalJSON(data []byte) error {
+	err := json.Unmarshal(data, this.ShellMsgJson)
+	if err != nil {
+		return err
+	}
+	return nil
 }

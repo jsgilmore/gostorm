@@ -15,6 +15,7 @@
 package gostorm
 
 import (
+	"fmt"
 	"github.com/jsgilmore/gostorm/core"
 	"io"
 	"sync"
@@ -47,6 +48,10 @@ func (this *shellSpoutImpl) Initialise(spoutConn core.SpoutConn) {
 
 func (this *shellSpoutImpl) Go() {
 	for {
+		// This lock prevents the spout exit function being called
+		// concurrently with another function. The lock is above the
+		// ReadSpoutMsg to ensure that any messages read from the spout
+		// in channel will make it to the spout before exit is called.
 		command, id, err := this.spoutConn.ReadSpoutMsg()
 		if err == io.EOF {
 			this.Exit()
@@ -54,6 +59,10 @@ func (this *shellSpoutImpl) Go() {
 		}
 		if err != nil {
 			panic(err)
+		}
+		this.Lock()
+		if this.cleaned && command != "next" {
+			panic(fmt.Sprintf("ShellSpout: %s message sent to cleaned up spout", command))
 		}
 
 		switch command {
@@ -64,9 +73,10 @@ func (this *shellSpoutImpl) Go() {
 		case "fail":
 			this.spout.Failed(id)
 		default:
-			panic("ShellSpout: Unknown command received from Storm")
+			panic(fmt.Sprintf("ShellSpout: Unknown command received from Storm: %s", command))
 		}
 		this.spoutConn.SendSync()
+		this.Unlock()
 	}
 }
 

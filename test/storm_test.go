@@ -47,10 +47,10 @@ var (
 	}
 )
 
-func newJsonTupleMsg(id, comp, stream string, task int64) *messages.TupleMsg {
-	msg := &messages.TupleMsg{
-		TupleJson: &messages.TupleJson{
-			TupleMetadata: &messages.TupleMetadata{
+func newJsonBoltMsg(id, comp, stream string, task int64) *messages.BoltMsg {
+	msg := &messages.BoltMsg{
+		BoltMsgJson: &messages.BoltMsgJson{
+			BoltMsgMeta: &messages.BoltMsgMeta{
 				Id:     id,
 				Comp:   comp,
 				Stream: stream,
@@ -61,14 +61,14 @@ func newJsonTupleMsg(id, comp, stream string, task int64) *messages.TupleMsg {
 	return msg
 }
 
-func genTupleMsg(id string, content interface{}) *messages.TupleMsg {
-	msg := newJsonTupleMsg(id, "spout", "default", 4)
-	msg.TupleJson.Contents = append(msg.TupleJson.Contents, content)
+func genBoltMsg(id string, content interface{}) *messages.BoltMsg {
+	msg := newJsonBoltMsg(id, "spout", "default", 4)
+	msg.BoltMsgJson.Contents = append(msg.BoltMsgJson.Contents, content)
 	return msg
 }
 
-func testTupleMsg(index int) *messages.TupleMsg {
-	return genTupleMsg(ids[index], contents[index])
+func testBoltMsg(index int) *messages.BoltMsg {
+	return genBoltMsg(ids[index], contents[index])
 }
 
 func genTaskIdsMsg() (taskIds []int32) {
@@ -98,8 +98,8 @@ func msgCheck(given, expected string, t *testing.T) {
 	}
 }
 
-func metaTest(given *messages.TupleMetadata, index int, t *testing.T) {
-	expected := &messages.TupleMetadata{
+func metaTest(given *messages.BoltMsgMeta, index int, t *testing.T) {
+	expected := &messages.BoltMsgMeta{
 		Id:     ids[index],
 		Stream: "default",
 		Comp:   "spout",
@@ -176,20 +176,20 @@ func TestLog(t *testing.T) {
 	checkPidFile(t)
 }
 
-func feedReadTuple(buffer io.Writer, t *testing.T) {
+func feedReadBoltMsg(buffer io.Writer, t *testing.T) {
 	feedConf(buffer, t)
-	writeMsg(testTupleMsg(0), buffer, t)
-	writeMsg(testTupleMsg(1), buffer, t)
-	writeMsg(testTupleMsg(2), buffer, t)
-	writeMsg(testTupleMsg(3), buffer, t)
-	writeMsg(testTupleMsg(4), buffer, t)
-	writeMsg(testTupleMsg(5), buffer, t)
+	writeMsg(testBoltMsg(0), buffer, t)
+	writeMsg(testBoltMsg(1), buffer, t)
+	writeMsg(testBoltMsg(2), buffer, t)
+	writeMsg(testBoltMsg(3), buffer, t)
+	writeMsg(testBoltMsg(4), buffer, t)
+	writeMsg(testBoltMsg(5), buffer, t)
 }
 
 func TestReadTuple(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 
-	feedReadTuple(buffer, t)
+	feedReadBoltMsg(buffer, t)
 
 	input := stormenc.NewJsonObjectInput(buffer)
 	output := stormenc.NewJsonObjectOutput(os.Stdout)
@@ -198,7 +198,8 @@ func TestReadTuple(t *testing.T) {
 
 	var msg string
 	for i := 0; i < 6; i++ {
-		meta, err := boltConn.ReadTuple(&msg)
+		meta := &messages.BoltMsgMeta{}
+		err := boltConn.ReadBoltMsg(meta, &msg)
 		checkErr(err, t)
 		msgCheck(msg, contents[i], t)
 		metaTest(meta, i, t)
@@ -268,32 +269,32 @@ func TestSendFail(t *testing.T) {
 
 func feedBoltSync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int32) {
 	feedConf(inBuffer, t)
-	writeMsg(testTupleMsg(0), inBuffer, t)
+	writeMsg(testBoltMsg(0), inBuffer, t)
 	taskIds := genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
 	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(1), inBuffer, t)
+	writeMsg(testBoltMsg(1), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
 	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(2), inBuffer, t)
+	writeMsg(testBoltMsg(2), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
 	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(3), inBuffer, t)
+	writeMsg(testBoltMsg(3), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
 	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(4), inBuffer, t)
+	writeMsg(testBoltMsg(4), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
 	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(5), inBuffer, t)
+	writeMsg(testBoltMsg(5), inBuffer, t)
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
 	writeMsg(taskIds, inBuffer, t)
@@ -311,7 +312,8 @@ func testBoltEmit(taskIdsList [][]int32, inBuffer io.Reader, t *testing.T) {
 
 	var msg string
 	for i := 0; i < 6; i++ {
-		meta, err := boltConn.ReadTuple(&msg)
+		meta := &messages.BoltMsgMeta{}
+		err := boltConn.ReadBoltMsg(meta, &msg)
 		checkErr(err, t)
 		msgCheck(msg, contents[i], t)
 		metaTest(meta, i, t)
@@ -345,8 +347,8 @@ func TestBoltSyncEmit(t *testing.T) {
 func feedBoltAsync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int32) {
 	// Send messages and task Ids in an asynchronous way
 	feedConf(inBuffer, t)
-	writeMsg(testTupleMsg(0), inBuffer, t)
-	writeMsg(testTupleMsg(1), inBuffer, t)
+	writeMsg(testBoltMsg(0), inBuffer, t)
+	writeMsg(testBoltMsg(1), inBuffer, t)
 
 	taskIds := genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)
@@ -355,10 +357,10 @@ func feedBoltAsync(inBuffer io.Writer, t *testing.T) (taskIdsList [][]int32) {
 	taskIdsList = append(taskIdsList, taskIds)
 	writeMsg(taskIds, inBuffer, t)
 
-	writeMsg(testTupleMsg(2), inBuffer, t)
-	writeMsg(testTupleMsg(3), inBuffer, t)
-	writeMsg(testTupleMsg(4), inBuffer, t)
-	writeMsg(testTupleMsg(5), inBuffer, t)
+	writeMsg(testBoltMsg(2), inBuffer, t)
+	writeMsg(testBoltMsg(3), inBuffer, t)
+	writeMsg(testBoltMsg(4), inBuffer, t)
+	writeMsg(testBoltMsg(5), inBuffer, t)
 
 	taskIds = genTaskIdsMsg()
 	taskIdsList = append(taskIdsList, taskIds)

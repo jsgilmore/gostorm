@@ -16,6 +16,7 @@ package gostorm
 
 import (
 	"github.com/jsgilmore/gostorm/core"
+	"github.com/jsgilmore/gostorm/messages"
 	"io"
 	"sync"
 )
@@ -30,13 +31,15 @@ type shellBoltImpl struct {
 	sync.Mutex
 	boltConn core.BoltConn
 	bolt     Bolt
+	meta     *messages.BoltMsgMeta
 	cleaned  bool
-	read     int
+	sent     int
 }
 
 func NewShellBolt(bolt Bolt) ShellBolt {
 	return &shellBoltImpl{
 		bolt: bolt,
+		meta: &messages.BoltMsgMeta{},
 	}
 }
 
@@ -49,7 +52,7 @@ func (this *shellBoltImpl) Initialise(boltConn core.BoltConn) {
 func (this *shellBoltImpl) Go() {
 	for {
 		fields := this.bolt.Fields()
-		meta, err := this.boltConn.ReadTuple(fields...)
+		err := this.boltConn.ReadBoltMsg(this.meta, fields...)
 		if err == io.EOF {
 			this.Exit()
 			return
@@ -57,7 +60,12 @@ func (this *shellBoltImpl) Go() {
 		if err != nil {
 			panic(err)
 		}
-		this.bolt.Execute(meta, fields...)
+
+		if this.cleaned {
+			panic("ShellBolt: Cleaned up bolt expected to execute")
+		}
+		this.bolt.Execute(*this.meta, fields...)
+		this.sent++
 	}
 }
 

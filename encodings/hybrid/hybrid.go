@@ -131,19 +131,20 @@ func (this *hybridInput) decodeInput(contentList []interface{}, contentStructs .
 
 // ReadTuple reads a tuple from Storm of which the contents are known
 // and decodes the contents into the provided list of structs
-func (this *hybridInput) ReadTuple(contentStructs ...interface{}) (metadata *messages.TupleMetadata, err error) {
-	tuple := &messages.TupleMsg{
-		TupleJson: &messages.TupleJson{
-			Contents: this.constructInput(contentStructs...),
+func (this *hybridInput) ReadBoltMsg(metadata *messages.BoltMsgMeta, contentStructs ...interface{}) (err error) {
+	boltMsg := &messages.BoltMsg{
+		BoltMsgJson: &messages.BoltMsgJson{
+			BoltMsgMeta: metadata,
+			Contents:    this.constructInput(contentStructs...),
 		},
 	}
-	err = this.ReadMsg(tuple)
+	err = this.ReadMsg(boltMsg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	this.decodeInput(tuple.TupleJson.Contents, contentStructs...)
-	return tuple.TupleJson.TupleMetadata, nil
+	this.decodeInput(boltMsg.BoltMsgJson.Contents, contentStructs...)
+	return nil
 }
 
 func NewHybridOutputFactory() core.OutputFactory {
@@ -190,9 +191,9 @@ func (this *hybridOutput) constructOutput(contents ...interface{}) []interface{}
 }
 
 func (this *hybridOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{}) {
-	emission := &messages.Emission{
-		EmissionProto: &messages.EmissionProto{
-			EmissionMetadata: &messages.EmissionMetadata{
+	shellMsg := &messages.ShellMsg{
+		ShellMsgJson: &messages.ShellMsgJson{
+			ShellMsgMeta: &messages.ShellMsgMeta{
 				Command: command,
 				Anchors: anchors,
 				Id:      &id,
@@ -200,10 +201,10 @@ func (this *hybridOutput) EmitGeneric(command, id, stream, msg string, anchors [
 				Task:    &directTask,
 				Msg:     &msg,
 			},
+			Contents: this.constructOutput(contents...),
 		},
-		ContentsJson: this.constructOutput(contents...),
 	}
-	this.SendMsg(emission)
+	this.SendMsg(shellMsg)
 }
 
 func init() {

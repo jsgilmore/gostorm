@@ -9,9 +9,6 @@ import json "encoding/json"
 import math "math"
 
 // discarding unused import gogoproto "code.google.com/p/gogoprotobuf/gogoproto/gogo.pb"
-// discarding unused import nextproto "next/gogoprotobuf/nextproto/next.pb"
-
-import ()
 
 import ()
 
@@ -96,7 +93,7 @@ type Pid struct {
 func (m *Pid) Reset()      { *m = Pid{} }
 func (*Pid) ProtoMessage() {}
 
-type TupleMetadata struct {
+type BoltMsgMeta struct {
 	Id               string `protobuf:"bytes,1,opt" json:"Id"`
 	Comp             string `protobuf:"bytes,2,opt" json:"Comp"`
 	Stream           string `protobuf:"bytes,3,opt" json:"Stream"`
@@ -104,26 +101,26 @@ type TupleMetadata struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *TupleMetadata) Reset()      { *m = TupleMetadata{} }
-func (*TupleMetadata) ProtoMessage() {}
+func (m *BoltMsgMeta) Reset()      { *m = BoltMsgMeta{} }
+func (*BoltMsgMeta) ProtoMessage() {}
 
-type TupleProto struct {
-	TupleMetadata    *TupleMetadata `protobuf:"bytes,1,opt" json:"TupleMetadata,omitempty"`
-	Contents         [][]byte       `protobuf:"bytes,2,rep" json:"Contents,omitempty"`
-	XXX_unrecognized []byte         `json:"-"`
+type BoltMsgProto struct {
+	BoltMsgMeta      *BoltMsgMeta `protobuf:"bytes,1,opt" json:"BoltMsgMeta,omitempty"`
+	Contents         [][]byte     `protobuf:"bytes,2,rep" json:"Contents,omitempty"`
+	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *TupleProto) Reset()      { *m = TupleProto{} }
-func (*TupleProto) ProtoMessage() {}
+func (m *BoltMsgProto) Reset()      { *m = BoltMsgProto{} }
+func (*BoltMsgProto) ProtoMessage() {}
 
-func (m *TupleProto) GetTupleMetadata() *TupleMetadata {
+func (m *BoltMsgProto) GetBoltMsgMeta() *BoltMsgMeta {
 	if m != nil {
-		return m.TupleMetadata
+		return m.BoltMsgMeta
 	}
 	return nil
 }
 
-func (m *TupleProto) GetContents() [][]byte {
+func (m *BoltMsgProto) GetContents() [][]byte {
 	if m != nil {
 		return m.Contents
 	}
@@ -154,71 +151,79 @@ type SpoutMsg struct {
 func (m *SpoutMsg) Reset()      { *m = SpoutMsg{} }
 func (*SpoutMsg) ProtoMessage() {}
 
-type EmissionMetadata struct {
+type ShellMsgMeta struct {
 	Command          string   `protobuf:"bytes,1,opt" json:"Command"`
 	Id               *string  `protobuf:"bytes,2,opt" json:"Id,omitempty"`
 	Anchors          []string `protobuf:"bytes,3,rep" json:"Anchors,omitempty"`
 	Stream           *string  `protobuf:"bytes,4,opt" json:"Stream,omitempty"`
 	Task             *int64   `protobuf:"varint,5,opt" json:"Task,omitempty"`
-	Msg              *string  `protobuf:"bytes,6,opt" json:"Msg,omitempty"`
+	NeedTaskIds      *bool    `protobuf:"varint,6,opt" json:"NeedTaskIds,omitempty"`
+	Msg              *string  `protobuf:"bytes,7,opt" json:"Msg,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *EmissionMetadata) Reset()      { *m = EmissionMetadata{} }
-func (*EmissionMetadata) ProtoMessage() {}
+func (m *ShellMsgMeta) Reset()      { *m = ShellMsgMeta{} }
+func (*ShellMsgMeta) ProtoMessage() {}
 
-func (m *EmissionMetadata) GetId() string {
+func (m *ShellMsgMeta) GetId() string {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
 	return ""
 }
 
-func (m *EmissionMetadata) GetAnchors() []string {
+func (m *ShellMsgMeta) GetAnchors() []string {
 	if m != nil {
 		return m.Anchors
 	}
 	return nil
 }
 
-func (m *EmissionMetadata) GetStream() string {
+func (m *ShellMsgMeta) GetStream() string {
 	if m != nil && m.Stream != nil {
 		return *m.Stream
 	}
 	return ""
 }
 
-func (m *EmissionMetadata) GetTask() int64 {
+func (m *ShellMsgMeta) GetTask() int64 {
 	if m != nil && m.Task != nil {
 		return *m.Task
 	}
 	return 0
 }
 
-func (m *EmissionMetadata) GetMsg() string {
+func (m *ShellMsgMeta) GetNeedTaskIds() bool {
+	if m != nil && m.NeedTaskIds != nil {
+		return *m.NeedTaskIds
+	}
+	return false
+}
+
+func (m *ShellMsgMeta) GetMsg() string {
 	if m != nil && m.Msg != nil {
 		return *m.Msg
 	}
 	return ""
 }
 
-type EmissionProto struct {
-	EmissionMetadata *EmissionMetadata `protobuf:"bytes,1,opt" json:"EmissionMetadata,omitempty"`
-	Contents         [][]byte          `protobuf:"bytes,2,rep" json:"Contents,omitempty"`
-	XXX_unrecognized []byte            `json:"-"`
+type ShellMsgProto struct {
+	ShellMsgMeta     *ShellMsgMeta `protobuf:"bytes,1,opt" json:"ShellMsgMeta,omitempty"`
+	Contents         [][]byte      `protobuf:"bytes,2,rep" json:"Contents,omitempty"`
+	XXX_unrecognized []byte        `json:"-"`
 }
 
-func (m *EmissionProto) Reset()      { *m = EmissionProto{} }
-func (*EmissionProto) ProtoMessage() {}
+func (m *ShellMsgProto) Reset()      { *m = ShellMsgProto{} }
+func (*ShellMsgProto) ProtoMessage() {}
 
-func (m *EmissionProto) GetEmissionMetadata() *EmissionMetadata {
+func (m *ShellMsgProto) GetShellMsgMeta() *ShellMsgMeta {
 	if m != nil {
-		return m.EmissionMetadata
+		return m.ShellMsgMeta
 	}
 	return nil
 }
 
-func (m *EmissionProto) GetContents() [][]byte {
+func (m *ShellMsgProto) GetContents() [][]byte {
 	if m != nil {
 		return m.Contents
 	}
@@ -541,7 +546,9 @@ func (m *Context) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Topology = &Topology{}
+			if m.Topology == nil {
+				m.Topology = &Topology{}
+			}
 			if err := m.Topology.Unmarshal(data[index:postIndex]); err != nil {
 				return err
 			}
@@ -643,7 +650,7 @@ func (m *Pid) Unmarshal(data []byte) error {
 	}
 	return nil
 }
-func (m *TupleMetadata) Unmarshal(data []byte) error {
+func (m *BoltMsgMeta) Unmarshal(data []byte) error {
 	l := len(data)
 	index := 0
 	for index < l {
@@ -763,7 +770,7 @@ func (m *TupleMetadata) Unmarshal(data []byte) error {
 	}
 	return nil
 }
-func (m *TupleProto) Unmarshal(data []byte) error {
+func (m *BoltMsgProto) Unmarshal(data []byte) error {
 	l := len(data)
 	index := 0
 	for index < l {
@@ -802,8 +809,10 @@ func (m *TupleProto) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.TupleMetadata = &TupleMetadata{}
-			if err := m.TupleMetadata.Unmarshal(data[index:postIndex]); err != nil {
+			if m.BoltMsgMeta == nil {
+				m.BoltMsgMeta = &BoltMsgMeta{}
+			}
+			if err := m.BoltMsgMeta.Unmarshal(data[index:postIndex]); err != nil {
 				return err
 			}
 			index = postIndex
@@ -989,7 +998,7 @@ func (m *SpoutMsg) Unmarshal(data []byte) error {
 	}
 	return nil
 }
-func (m *EmissionMetadata) Unmarshal(data []byte) error {
+func (m *ShellMsgMeta) Unmarshal(data []byte) error {
 	l := len(data)
 	index := 0
 	for index < l {
@@ -1116,6 +1125,24 @@ func (m *EmissionMetadata) Unmarshal(data []byte) error {
 			}
 			m.Task = &v
 		case 6:
+			if wireType != 0 {
+				return proto.ErrWrongType
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.NeedTaskIds = &b
+		case 7:
 			if wireType != 2 {
 				return proto.ErrWrongType
 			}
@@ -1158,7 +1185,7 @@ func (m *EmissionMetadata) Unmarshal(data []byte) error {
 	}
 	return nil
 }
-func (m *EmissionProto) Unmarshal(data []byte) error {
+func (m *ShellMsgProto) Unmarshal(data []byte) error {
 	l := len(data)
 	index := 0
 	for index < l {
@@ -1197,8 +1224,10 @@ func (m *EmissionProto) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.EmissionMetadata = &EmissionMetadata{}
-			if err := m.EmissionMetadata.Unmarshal(data[index:postIndex]); err != nil {
+			if m.ShellMsgMeta == nil {
+				m.ShellMsgMeta = &ShellMsgMeta{}
+			}
+			if err := m.ShellMsgMeta.Unmarshal(data[index:postIndex]); err != nil {
 				return err
 			}
 			index = postIndex
@@ -1503,7 +1532,7 @@ func (m *Pid) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
-func (m *TupleMetadata) Marshal() (data []byte, err error) {
+func (m *BoltMsgMeta) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
 	n, err := m.MarshalTo(data)
@@ -1513,7 +1542,7 @@ func (m *TupleMetadata) Marshal() (data []byte, err error) {
 	return data[:n], nil
 }
 
-func (m *TupleMetadata) MarshalTo(data []byte) (n int, err error) {
+func (m *BoltMsgMeta) MarshalTo(data []byte) (n int, err error) {
 	var i int
 	_ = i
 	var l int
@@ -1538,7 +1567,7 @@ func (m *TupleMetadata) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
-func (m *TupleProto) Marshal() (data []byte, err error) {
+func (m *BoltMsgProto) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
 	n, err := m.MarshalTo(data)
@@ -1548,16 +1577,16 @@ func (m *TupleProto) Marshal() (data []byte, err error) {
 	return data[:n], nil
 }
 
-func (m *TupleProto) MarshalTo(data []byte) (n int, err error) {
+func (m *BoltMsgProto) MarshalTo(data []byte) (n int, err error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.TupleMetadata != nil {
+	if m.BoltMsgMeta != nil {
 		data[i] = 0xa
 		i++
-		i = encodeVarintMessages(data, i, uint64(m.TupleMetadata.Size()))
-		n2, err := m.TupleMetadata.MarshalTo(data[i:])
+		i = encodeVarintMessages(data, i, uint64(m.BoltMsgMeta.Size()))
+		n2, err := m.BoltMsgMeta.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -1637,7 +1666,7 @@ func (m *SpoutMsg) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
-func (m *EmissionMetadata) Marshal() (data []byte, err error) {
+func (m *ShellMsgMeta) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
 	n, err := m.MarshalTo(data)
@@ -1647,7 +1676,7 @@ func (m *EmissionMetadata) Marshal() (data []byte, err error) {
 	return data[:n], nil
 }
 
-func (m *EmissionMetadata) MarshalTo(data []byte) (n int, err error) {
+func (m *ShellMsgMeta) MarshalTo(data []byte) (n int, err error) {
 	var i int
 	_ = i
 	var l int
@@ -1688,8 +1717,18 @@ func (m *EmissionMetadata) MarshalTo(data []byte) (n int, err error) {
 		i++
 		i = encodeVarintMessages(data, i, uint64(*m.Task))
 	}
+	if m.NeedTaskIds != nil {
+		data[i] = 0x30
+		i++
+		if *m.NeedTaskIds {
+			data[i] = 1
+		} else {
+			data[i] = 0
+		}
+		i++
+	}
 	if m.Msg != nil {
-		data[i] = 0x32
+		data[i] = 0x3a
 		i++
 		i = encodeVarintMessages(data, i, uint64(len(*m.Msg)))
 		i += copy(data[i:], *m.Msg)
@@ -1699,7 +1738,7 @@ func (m *EmissionMetadata) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
-func (m *EmissionProto) Marshal() (data []byte, err error) {
+func (m *ShellMsgProto) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
 	n, err := m.MarshalTo(data)
@@ -1709,16 +1748,16 @@ func (m *EmissionProto) Marshal() (data []byte, err error) {
 	return data[:n], nil
 }
 
-func (m *EmissionProto) MarshalTo(data []byte) (n int, err error) {
+func (m *ShellMsgProto) MarshalTo(data []byte) (n int, err error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.EmissionMetadata != nil {
+	if m.ShellMsgMeta != nil {
 		data[i] = 0xa
 		i++
-		i = encodeVarintMessages(data, i, uint64(m.EmissionMetadata.Size()))
-		n3, err := m.EmissionMetadata.MarshalTo(data[i:])
+		i = encodeVarintMessages(data, i, uint64(m.ShellMsgMeta.Size()))
+		n3, err := m.ShellMsgMeta.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -1855,11 +1894,11 @@ func (this *Pid) String() string {
 	}, "")
 	return s
 }
-func (this *TupleMetadata) String() string {
+func (this *BoltMsgMeta) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&TupleMetadata{`,
+	s := strings.Join([]string{`&BoltMsgMeta{`,
 		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
 		`Comp:` + fmt.Sprintf("%v", this.Comp) + `,`,
 		`Stream:` + fmt.Sprintf("%v", this.Stream) + `,`,
@@ -1869,12 +1908,12 @@ func (this *TupleMetadata) String() string {
 	}, "")
 	return s
 }
-func (this *TupleProto) String() string {
+func (this *BoltMsgProto) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&TupleProto{`,
-		`TupleMetadata:` + strings.Replace(fmt.Sprintf("%v", this.TupleMetadata), "TupleMetadata", "TupleMetadata", 1) + `,`,
+	s := strings.Join([]string{`&BoltMsgProto{`,
+		`BoltMsgMeta:` + strings.Replace(fmt.Sprintf("%v", this.BoltMsgMeta), "BoltMsgMeta", "BoltMsgMeta", 1) + `,`,
 		`Contents:` + fmt.Sprintf("%v", this.Contents) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
@@ -1904,28 +1943,29 @@ func (this *SpoutMsg) String() string {
 	}, "")
 	return s
 }
-func (this *EmissionMetadata) String() string {
+func (this *ShellMsgMeta) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&EmissionMetadata{`,
+	s := strings.Join([]string{`&ShellMsgMeta{`,
 		`Command:` + fmt.Sprintf("%v", this.Command) + `,`,
 		`Id:` + valueToStringMessages(this.Id) + `,`,
 		`Anchors:` + fmt.Sprintf("%v", this.Anchors) + `,`,
 		`Stream:` + valueToStringMessages(this.Stream) + `,`,
 		`Task:` + valueToStringMessages(this.Task) + `,`,
+		`NeedTaskIds:` + valueToStringMessages(this.NeedTaskIds) + `,`,
 		`Msg:` + valueToStringMessages(this.Msg) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
 }
-func (this *EmissionProto) String() string {
+func (this *ShellMsgProto) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&EmissionProto{`,
-		`EmissionMetadata:` + strings.Replace(fmt.Sprintf("%v", this.EmissionMetadata), "EmissionMetadata", "EmissionMetadata", 1) + `,`,
+	s := strings.Join([]string{`&ShellMsgProto{`,
+		`ShellMsgMeta:` + strings.Replace(fmt.Sprintf("%v", this.ShellMsgMeta), "ShellMsgMeta", "ShellMsgMeta", 1) + `,`,
 		`Contents:` + fmt.Sprintf("%v", this.Contents) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
@@ -1956,9 +1996,9 @@ func valueToStringMessages(v interface{}) string {
 func (m *TaskComponentMapping) Size() (n int) {
 	var l int
 	_ = l
-	l = len([]byte(m.Task))
+	l = len(m.Task)
 	n += 1 + l + sovMessages(uint64(l))
-	l = len([]byte(m.Component))
+	l = len(m.Component)
 	n += 1 + l + sovMessages(uint64(l))
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -1983,9 +2023,9 @@ func (m *Topology) Size() (n int) {
 func (m *Conf) Size() (n int) {
 	var l int
 	_ = l
-	l = len([]byte(m.Key))
+	l = len(m.Key)
 	n += 1 + l + sovMessages(uint64(l))
-	l = len([]byte(m.Value))
+	l = len(m.Value)
 	n += 1 + l + sovMessages(uint64(l))
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -1995,7 +2035,7 @@ func (m *Conf) Size() (n int) {
 func (m *Context) Size() (n int) {
 	var l int
 	_ = l
-	l = len([]byte(m.PidDir))
+	l = len(m.PidDir)
 	n += 1 + l + sovMessages(uint64(l))
 	if m.Topology != nil {
 		l = m.Topology.Size()
@@ -2021,14 +2061,14 @@ func (m *Pid) Size() (n int) {
 	}
 	return n
 }
-func (m *TupleMetadata) Size() (n int) {
+func (m *BoltMsgMeta) Size() (n int) {
 	var l int
 	_ = l
-	l = len([]byte(m.Id))
+	l = len(m.Id)
 	n += 1 + l + sovMessages(uint64(l))
-	l = len([]byte(m.Comp))
+	l = len(m.Comp)
 	n += 1 + l + sovMessages(uint64(l))
-	l = len([]byte(m.Stream))
+	l = len(m.Stream)
 	n += 1 + l + sovMessages(uint64(l))
 	n += 1 + sovMessages(uint64(m.Task))
 	if m.XXX_unrecognized != nil {
@@ -2036,11 +2076,11 @@ func (m *TupleMetadata) Size() (n int) {
 	}
 	return n
 }
-func (m *TupleProto) Size() (n int) {
+func (m *BoltMsgProto) Size() (n int) {
 	var l int
 	_ = l
-	if m.TupleMetadata != nil {
-		l = m.TupleMetadata.Size()
+	if m.BoltMsgMeta != nil {
+		l = m.BoltMsgMeta.Size()
 		n += 1 + l + sovMessages(uint64(l))
 	}
 	if len(m.Contents) > 0 {
@@ -2070,39 +2110,42 @@ func (m *TaskIds) Size() (n int) {
 func (m *SpoutMsg) Size() (n int) {
 	var l int
 	_ = l
-	l = len([]byte(m.Command))
+	l = len(m.Command)
 	n += 1 + l + sovMessages(uint64(l))
-	l = len([]byte(m.Id))
+	l = len(m.Id)
 	n += 1 + l + sovMessages(uint64(l))
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
-func (m *EmissionMetadata) Size() (n int) {
+func (m *ShellMsgMeta) Size() (n int) {
 	var l int
 	_ = l
-	l = len([]byte(m.Command))
+	l = len(m.Command)
 	n += 1 + l + sovMessages(uint64(l))
 	if m.Id != nil {
-		l = len([]byte(*m.Id))
+		l = len(*m.Id)
 		n += 1 + l + sovMessages(uint64(l))
 	}
 	if len(m.Anchors) > 0 {
 		for _, s := range m.Anchors {
-			l = len([]byte(s))
+			l = len(s)
 			n += 1 + l + sovMessages(uint64(l))
 		}
 	}
 	if m.Stream != nil {
-		l = len([]byte(*m.Stream))
+		l = len(*m.Stream)
 		n += 1 + l + sovMessages(uint64(l))
 	}
 	if m.Task != nil {
 		n += 1 + sovMessages(uint64(*m.Task))
 	}
+	if m.NeedTaskIds != nil {
+		n += 2
+	}
 	if m.Msg != nil {
-		l = len([]byte(*m.Msg))
+		l = len(*m.Msg)
 		n += 1 + l + sovMessages(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -2110,11 +2153,11 @@ func (m *EmissionMetadata) Size() (n int) {
 	}
 	return n
 }
-func (m *EmissionProto) Size() (n int) {
+func (m *ShellMsgProto) Size() (n int) {
 	var l int
 	_ = l
-	if m.EmissionMetadata != nil {
-		l = m.EmissionMetadata.Size()
+	if m.ShellMsgMeta != nil {
+		l = m.ShellMsgMeta.Size()
 		n += 1 + l + sovMessages(uint64(l))
 	}
 	if len(m.Contents) > 0 {
@@ -2131,7 +2174,7 @@ func (m *EmissionProto) Size() (n int) {
 func (m *Test) Size() (n int) {
 	var l int
 	_ = l
-	l = len([]byte(m.Name))
+	l = len(m.Name)
 	n += 1 + l + sovMessages(uint64(l))
 	n += 1 + sovMessages(uint64(m.Number))
 	l = len(m.Data)
@@ -2220,8 +2263,8 @@ func NewPopulatedPid(r randyMessages, easy bool) *Pid {
 	return this
 }
 
-func NewPopulatedTupleMetadata(r randyMessages, easy bool) *TupleMetadata {
-	this := &TupleMetadata{}
+func NewPopulatedBoltMsgMeta(r randyMessages, easy bool) *BoltMsgMeta {
+	this := &BoltMsgMeta{}
 	this.Id = randStringMessages(r)
 	this.Comp = randStringMessages(r)
 	this.Stream = randStringMessages(r)
@@ -2232,10 +2275,10 @@ func NewPopulatedTupleMetadata(r randyMessages, easy bool) *TupleMetadata {
 	return this
 }
 
-func NewPopulatedTupleProto(r randyMessages, easy bool) *TupleProto {
-	this := &TupleProto{}
+func NewPopulatedBoltMsgProto(r randyMessages, easy bool) *BoltMsgProto {
+	this := &BoltMsgProto{}
 	if r.Intn(10) != 0 {
-		this.TupleMetadata = NewPopulatedTupleMetadata(r, easy)
+		this.BoltMsgMeta = NewPopulatedBoltMsgMeta(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v3 := r.Intn(100)
@@ -2279,8 +2322,8 @@ func NewPopulatedSpoutMsg(r randyMessages, easy bool) *SpoutMsg {
 	return this
 }
 
-func NewPopulatedEmissionMetadata(r randyMessages, easy bool) *EmissionMetadata {
-	this := &EmissionMetadata{}
+func NewPopulatedShellMsgMeta(r randyMessages, easy bool) *ShellMsgMeta {
+	this := &ShellMsgMeta{}
 	this.Command = randStringMessages(r)
 	if r.Intn(10) != 0 {
 		v6 := randStringMessages(r)
@@ -2302,27 +2345,31 @@ func NewPopulatedEmissionMetadata(r randyMessages, easy bool) *EmissionMetadata 
 		this.Task = &v9
 	}
 	if r.Intn(10) != 0 {
-		v10 := randStringMessages(r)
-		this.Msg = &v10
+		v10 := bool(r.Intn(2) == 0)
+		this.NeedTaskIds = &v10
+	}
+	if r.Intn(10) != 0 {
+		v11 := randStringMessages(r)
+		this.Msg = &v11
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 7)
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 8)
 	}
 	return this
 }
 
-func NewPopulatedEmissionProto(r randyMessages, easy bool) *EmissionProto {
-	this := &EmissionProto{}
+func NewPopulatedShellMsgProto(r randyMessages, easy bool) *ShellMsgProto {
+	this := &ShellMsgProto{}
 	if r.Intn(10) != 0 {
-		this.EmissionMetadata = NewPopulatedEmissionMetadata(r, easy)
+		this.ShellMsgMeta = NewPopulatedShellMsgMeta(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v11 := r.Intn(100)
-		this.Contents = make([][]byte, v11)
-		for i := 0; i < v11; i++ {
-			v12 := r.Intn(100)
-			this.Contents[i] = make([]byte, v12)
-			for j := 0; j < v12; j++ {
+		v12 := r.Intn(100)
+		this.Contents = make([][]byte, v12)
+		for i := 0; i < v12; i++ {
+			v13 := r.Intn(100)
+			this.Contents[i] = make([]byte, v13)
+			for j := 0; j < v13; j++ {
 				this.Contents[i][j] = byte(r.Intn(256))
 			}
 		}
@@ -2337,9 +2384,9 @@ func NewPopulatedTest(r randyMessages, easy bool) *Test {
 	this := &Test{}
 	this.Name = randStringMessages(r)
 	this.Number = r.Int63()
-	v13 := r.Intn(100)
-	this.Data = make([]byte, v13)
-	for i := 0; i < v13; i++ {
+	v14 := r.Intn(100)
+	this.Data = make([]byte, v14)
+	for i := 0; i < v14; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2365,9 +2412,9 @@ func randUTF8RuneMessages(r randyMessages) rune {
 	return res
 }
 func randStringMessages(r randyMessages) string {
-	v14 := r.Intn(100)
-	tmps := make([]rune, v14)
-	for i := 0; i < v14; i++ {
+	v15 := r.Intn(100)
+	tmps := make([]rune, v15)
+	for i := 0; i < v15; i++ {
 		tmps[i] = randUTF8RuneMessages(r)
 	}
 	return string(tmps)
@@ -2744,7 +2791,7 @@ func (this *Pid) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *TupleMetadata) VerboseEqual(that interface{}) error {
+func (this *BoltMsgMeta) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -2752,17 +2799,17 @@ func (this *TupleMetadata) VerboseEqual(that interface{}) error {
 		return fmt1.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*TupleMetadata)
+	that1, ok := that.(*BoltMsgMeta)
 	if !ok {
-		return fmt1.Errorf("that is not of type *TupleMetadata")
+		return fmt1.Errorf("that is not of type *BoltMsgMeta")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt1.Errorf("that is type *TupleMetadata but is nil && this != nil")
+		return fmt1.Errorf("that is type *BoltMsgMeta but is nil && this != nil")
 	} else if this == nil {
-		return fmt1.Errorf("that is type *TupleMetadatabut is not nil && this == nil")
+		return fmt1.Errorf("that is type *BoltMsgMetabut is not nil && this == nil")
 	}
 	if this.Id != that1.Id {
 		return fmt1.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
@@ -2781,7 +2828,7 @@ func (this *TupleMetadata) VerboseEqual(that interface{}) error {
 	}
 	return nil
 }
-func (this *TupleMetadata) Equal(that interface{}) bool {
+func (this *BoltMsgMeta) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
 			return true
@@ -2789,7 +2836,7 @@ func (this *TupleMetadata) Equal(that interface{}) bool {
 		return false
 	}
 
-	that1, ok := that.(*TupleMetadata)
+	that1, ok := that.(*BoltMsgMeta)
 	if !ok {
 		return false
 	}
@@ -2818,7 +2865,7 @@ func (this *TupleMetadata) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *TupleProto) VerboseEqual(that interface{}) error {
+func (this *BoltMsgProto) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -2826,20 +2873,20 @@ func (this *TupleProto) VerboseEqual(that interface{}) error {
 		return fmt1.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*TupleProto)
+	that1, ok := that.(*BoltMsgProto)
 	if !ok {
-		return fmt1.Errorf("that is not of type *TupleProto")
+		return fmt1.Errorf("that is not of type *BoltMsgProto")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt1.Errorf("that is type *TupleProto but is nil && this != nil")
+		return fmt1.Errorf("that is type *BoltMsgProto but is nil && this != nil")
 	} else if this == nil {
-		return fmt1.Errorf("that is type *TupleProtobut is not nil && this == nil")
+		return fmt1.Errorf("that is type *BoltMsgProtobut is not nil && this == nil")
 	}
-	if !this.TupleMetadata.Equal(that1.TupleMetadata) {
-		return fmt1.Errorf("TupleMetadata this(%v) Not Equal that(%v)", this.TupleMetadata, that1.TupleMetadata)
+	if !this.BoltMsgMeta.Equal(that1.BoltMsgMeta) {
+		return fmt1.Errorf("BoltMsgMeta this(%v) Not Equal that(%v)", this.BoltMsgMeta, that1.BoltMsgMeta)
 	}
 	if len(this.Contents) != len(that1.Contents) {
 		return fmt1.Errorf("Contents this(%v) Not Equal that(%v)", len(this.Contents), len(that1.Contents))
@@ -2854,7 +2901,7 @@ func (this *TupleProto) VerboseEqual(that interface{}) error {
 	}
 	return nil
 }
-func (this *TupleProto) Equal(that interface{}) bool {
+func (this *BoltMsgProto) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
 			return true
@@ -2862,7 +2909,7 @@ func (this *TupleProto) Equal(that interface{}) bool {
 		return false
 	}
 
-	that1, ok := that.(*TupleProto)
+	that1, ok := that.(*BoltMsgProto)
 	if !ok {
 		return false
 	}
@@ -2874,7 +2921,7 @@ func (this *TupleProto) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.TupleMetadata.Equal(that1.TupleMetadata) {
+	if !this.BoltMsgMeta.Equal(that1.BoltMsgMeta) {
 		return false
 	}
 	if len(this.Contents) != len(that1.Contents) {
@@ -3018,7 +3065,7 @@ func (this *SpoutMsg) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *EmissionMetadata) VerboseEqual(that interface{}) error {
+func (this *ShellMsgMeta) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -3026,17 +3073,17 @@ func (this *EmissionMetadata) VerboseEqual(that interface{}) error {
 		return fmt1.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*EmissionMetadata)
+	that1, ok := that.(*ShellMsgMeta)
 	if !ok {
-		return fmt1.Errorf("that is not of type *EmissionMetadata")
+		return fmt1.Errorf("that is not of type *ShellMsgMeta")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt1.Errorf("that is type *EmissionMetadata but is nil && this != nil")
+		return fmt1.Errorf("that is type *ShellMsgMeta but is nil && this != nil")
 	} else if this == nil {
-		return fmt1.Errorf("that is type *EmissionMetadatabut is not nil && this == nil")
+		return fmt1.Errorf("that is type *ShellMsgMetabut is not nil && this == nil")
 	}
 	if this.Command != that1.Command {
 		return fmt1.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
@@ -3076,6 +3123,15 @@ func (this *EmissionMetadata) VerboseEqual(that interface{}) error {
 	} else if that1.Task != nil {
 		return fmt1.Errorf("Task this(%v) Not Equal that(%v)", this.Task, that1.Task)
 	}
+	if this.NeedTaskIds != nil && that1.NeedTaskIds != nil {
+		if *this.NeedTaskIds != *that1.NeedTaskIds {
+			return fmt1.Errorf("NeedTaskIds this(%v) Not Equal that(%v)", *this.NeedTaskIds, *that1.NeedTaskIds)
+		}
+	} else if this.NeedTaskIds != nil {
+		return fmt1.Errorf("this.NeedTaskIds == nil && that.NeedTaskIds != nil")
+	} else if that1.NeedTaskIds != nil {
+		return fmt1.Errorf("NeedTaskIds this(%v) Not Equal that(%v)", this.NeedTaskIds, that1.NeedTaskIds)
+	}
 	if this.Msg != nil && that1.Msg != nil {
 		if *this.Msg != *that1.Msg {
 			return fmt1.Errorf("Msg this(%v) Not Equal that(%v)", *this.Msg, *that1.Msg)
@@ -3090,7 +3146,7 @@ func (this *EmissionMetadata) VerboseEqual(that interface{}) error {
 	}
 	return nil
 }
-func (this *EmissionMetadata) Equal(that interface{}) bool {
+func (this *ShellMsgMeta) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
 			return true
@@ -3098,7 +3154,7 @@ func (this *EmissionMetadata) Equal(that interface{}) bool {
 		return false
 	}
 
-	that1, ok := that.(*EmissionMetadata)
+	that1, ok := that.(*ShellMsgMeta)
 	if !ok {
 		return false
 	}
@@ -3148,6 +3204,15 @@ func (this *EmissionMetadata) Equal(that interface{}) bool {
 	} else if that1.Task != nil {
 		return false
 	}
+	if this.NeedTaskIds != nil && that1.NeedTaskIds != nil {
+		if *this.NeedTaskIds != *that1.NeedTaskIds {
+			return false
+		}
+	} else if this.NeedTaskIds != nil {
+		return false
+	} else if that1.NeedTaskIds != nil {
+		return false
+	}
 	if this.Msg != nil && that1.Msg != nil {
 		if *this.Msg != *that1.Msg {
 			return false
@@ -3162,7 +3227,7 @@ func (this *EmissionMetadata) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *EmissionProto) VerboseEqual(that interface{}) error {
+func (this *ShellMsgProto) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -3170,20 +3235,20 @@ func (this *EmissionProto) VerboseEqual(that interface{}) error {
 		return fmt1.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*EmissionProto)
+	that1, ok := that.(*ShellMsgProto)
 	if !ok {
-		return fmt1.Errorf("that is not of type *EmissionProto")
+		return fmt1.Errorf("that is not of type *ShellMsgProto")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt1.Errorf("that is type *EmissionProto but is nil && this != nil")
+		return fmt1.Errorf("that is type *ShellMsgProto but is nil && this != nil")
 	} else if this == nil {
-		return fmt1.Errorf("that is type *EmissionProtobut is not nil && this == nil")
+		return fmt1.Errorf("that is type *ShellMsgProtobut is not nil && this == nil")
 	}
-	if !this.EmissionMetadata.Equal(that1.EmissionMetadata) {
-		return fmt1.Errorf("EmissionMetadata this(%v) Not Equal that(%v)", this.EmissionMetadata, that1.EmissionMetadata)
+	if !this.ShellMsgMeta.Equal(that1.ShellMsgMeta) {
+		return fmt1.Errorf("ShellMsgMeta this(%v) Not Equal that(%v)", this.ShellMsgMeta, that1.ShellMsgMeta)
 	}
 	if len(this.Contents) != len(that1.Contents) {
 		return fmt1.Errorf("Contents this(%v) Not Equal that(%v)", len(this.Contents), len(that1.Contents))
@@ -3198,7 +3263,7 @@ func (this *EmissionProto) VerboseEqual(that interface{}) error {
 	}
 	return nil
 }
-func (this *EmissionProto) Equal(that interface{}) bool {
+func (this *ShellMsgProto) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
 			return true
@@ -3206,7 +3271,7 @@ func (this *EmissionProto) Equal(that interface{}) bool {
 		return false
 	}
 
-	that1, ok := that.(*EmissionProto)
+	that1, ok := that.(*ShellMsgProto)
 	if !ok {
 		return false
 	}
@@ -3218,7 +3283,7 @@ func (this *EmissionProto) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.EmissionMetadata.Equal(that1.EmissionMetadata) {
+	if !this.ShellMsgMeta.Equal(that1.ShellMsgMeta) {
 		return false
 	}
 	if len(this.Contents) != len(that1.Contents) {

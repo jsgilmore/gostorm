@@ -23,11 +23,7 @@ import (
 	"github.com/jsgilmore/gostorm/core"
 	"github.com/jsgilmore/gostorm/messages"
 	"io"
-	"log"
 )
-
-// Use BigEndian to make Java's life easier
-var byteOrder = binary.BigEndian
 
 func NewProtobufInputFactory() core.InputFactory {
 	return &protobufInputFactory{}
@@ -43,12 +39,14 @@ func NewProtobufInput(reader io.Reader) core.Input {
 	return &protobufInput{
 		reader:      bufio.NewReader(reader),
 		tupleBuffer: list.New(),
+		bufferPool:  NewBufferPoolSingle(NewAllocatorHeap()),
 	}
 }
 
 type protobufInput struct {
 	reader      *bufio.Reader
 	tupleBuffer *list.List
+	bufferPool  BufferPool
 }
 
 func (this *protobufInput) readData() (data []byte, err error) {
@@ -56,34 +54,43 @@ func (this *protobufInput) readData() (data []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-	data = make([]byte, msgLen)
-	binary.Read(this.reader, byteOrder, data)
+	data = this.bufferPool.New(int(msgLen))
+	// ReadFull is required since a bufio reader can return less data
+	// than required in a single read
+	_, err = io.ReadFull(this.reader, data)
+	if err != nil {
+		return nil, err
+	}
 	return data, nil
 }
 
 // readBytes reads data from stdin into the struct provided.
 func (this *protobufInput) ReadMsg(msg interface{}) (err error) {
 	var data []byte
-	// Read data from the tuple buffer
+	var bufferPoolRead bool
 	if this.tupleBuffer.Len() > 0 {
+		// Read data from the tuple buffer
 		e := this.tupleBuffer.Front()
 		data = this.tupleBuffer.Remove(e).([]byte)
-		// if the tuple buffer is empty, read data from storm
+		bufferPoolRead = false
 	} else {
+		// if the tuple buffer is empty, read data from storm
 		data, err = this.readData()
 		if err != nil {
 			return err
 		}
+		bufferPoolRead = true
 	}
 
 	err = proto.Unmarshal(data, msg.(proto.Message))
-	if err != nil {
-		log.Printf("core protobuf encoding: Unmarshalling: %s", data)
-		return err
+	if bufferPoolRead {
+		// If the buffer pool was mmapped, we don't want to mix heap and mmapped data
+		this.bufferPool.Dispose(data)
 	}
-	return nil
+	return err
 }
 
+// TODO This asynchronous behaviour should still be added to protobuf
 func isTuple(data []byte) bool {
 	return false
 }
@@ -95,9 +102,14 @@ func (this *protobufInput) ReadTaskIds() (taskIds []int32) {
 		panic(err)
 	}
 
-	// If we didn't receive a json array, treat it as a tuple instead
 	if isTuple(data) {
-		this.tupleBuffer.PushBack(data)
+		// Since we want to dispose of the data slice to reuse it for
+		// reading, we create a new slice for buffering. Creating a
+		// new slice here is ok, since we probably didn't create one
+		// when we actually read the data.
+		bufferedData := make([]byte, len(data))
+		copy(bufferedData, data)
+		this.tupleBuffer.PushBack(bufferedData)
 		return this.ReadTaskIds()
 	}
 
@@ -106,6 +118,7 @@ func (this *protobufInput) ReadTaskIds() (taskIds []int32) {
 	if err != nil {
 		panic(err)
 	}
+	this.bufferPool.Dispose(data)
 	return taskIdsProto.TaskIds
 }
 
@@ -125,19 +138,24 @@ func (this *protobufInput) decodeInput(contentList [][]byte, contentStructs ...i
 
 // ReadTuple reads a tuple from Storm of which the contents are known
 // and decodes the contents into the provided list of structs
-func (this *protobufInput) ReadTuple(contentStructs ...interface{}) (metadata *messages.TupleMetadata, err error) {
-	tuple := &messages.TupleMsg{
-		TupleProto: &messages.TupleProto{
+func (this *protobufInput) ReadBoltMsg(metadata *messages.BoltMsgMeta, contentStructs ...interface{}) (err error) {
+	boltMsg := &messages.BoltMsg{
+		BoltMsgProto: &messages.BoltMsgProto{
+			//BoltMsgMeta: metadata,
 			Contents: this.constructInput(contentStructs...),
 		},
 	}
-	err = this.ReadMsg(tuple)
+	err = this.ReadMsg(boltMsg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	this.decodeInput(tuple.Contents, contentStructs...)
-	return tuple.TupleProto.TupleMetadata, nil
+	this.decodeInput(boltMsg.Contents, contentStructs...)
+	// TODO This assignment needs to be replaced with the top
+	// assignmet and unmarshalMerge used when that feature has been
+	// added to gogoprotobuf
+	*metadata = *boltMsg.BoltMsgMeta
+	return nil
 }
 
 func NewProtobufOutputFactory() core.OutputFactory {
@@ -151,13 +169,23 @@ func (this *protobufOutputFactory) NewOutput(writer io.Writer) core.Output {
 }
 
 func NewProtobufOutput(writer io.Writer) core.Output {
+	shellMsg := &messages.ShellMsg{
+		ShellMsgProto: &messages.ShellMsgProto{
+			ShellMsgMeta: &messages.ShellMsgMeta{},
+		},
+	}
+
 	return &protobufOutput{
-		writer: writer,
+		writer:     writer,
+		bufferPool: NewBufferPoolSingle(NewAllocatorHeap()),
+		shellMsg:   shellMsg,
 	}
 }
 
 type protobufOutput struct {
-	writer io.Writer
+	writer     io.Writer
+	bufferPool BufferPool
+	shellMsg   *messages.ShellMsg
 }
 
 func varintSize(x uint64) (n int) {
@@ -180,7 +208,7 @@ type ProtoMarshaler interface {
 func (this *protobufOutput) SendMsg(msg interface{}) {
 	protoSiz := msg.(ProtoMarshaler).Size()
 	varIntSiz := varintSize(uint64(protoSiz))
-	buffer := make([]byte, varIntSiz+protoSiz)
+	buffer := this.bufferPool.New(varIntSiz + protoSiz)
 
 	n := binary.PutUvarint(buffer, uint64(protoSiz))
 	if varIntSiz != n {
@@ -195,10 +223,14 @@ func (this *protobufOutput) SendMsg(msg interface{}) {
 		panic(err)
 	}
 
-	err = binary.Write(this.writer, byteOrder, buffer)
+	n, err = this.writer.Write(buffer)
+	if n != varIntSiz+protoSiz {
+		panic("Incorrect length written")
+	}
 	if err != nil {
 		panic(err)
 	}
+	this.bufferPool.Dispose(buffer)
 }
 
 func (this *protobufOutput) constructOutput(contents ...interface{}) [][]byte {
@@ -214,20 +246,17 @@ func (this *protobufOutput) constructOutput(contents ...interface{}) [][]byte {
 }
 
 func (this *protobufOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{}) {
-	emission := &messages.Emission{
-		EmissionProto: &messages.EmissionProto{
-			EmissionMetadata: &messages.EmissionMetadata{
-				Command: command,
-				Anchors: anchors,
-				Id:      &id,
-				Stream:  &stream,
-				Task:    &directTask,
-				Msg:     &msg,
-			},
-			Contents: this.constructOutput(contents...),
-		},
-	}
-	this.SendMsg(emission)
+	meta := this.shellMsg.ShellMsgMeta
+	meta.Command = command
+	meta.Anchors = anchors
+	meta.Id = &id
+	meta.Stream = &stream
+	meta.Task = &directTask
+	needTaskIds := true
+	meta.NeedTaskIds = &needTaskIds
+	meta.Msg = &msg
+	this.shellMsg.ShellMsgProto.Contents = this.constructOutput(contents...)
+	this.SendMsg(this.shellMsg)
 }
 
 func init() {

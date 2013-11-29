@@ -38,9 +38,9 @@ func newTestObj(name string, number int64, data []byte) *messages.Test {
 }
 
 func TestContSendRecv(t *testing.T) {
-	buffer := bytes.NewBuffer(nil)
+	buffer := bytes.NewBuffer(make([]byte, 0, 1<<20))
+	//buffer := new(bytes.Buffer)
 	output := NewProtobufOutput(buffer)
-	input := NewProtobufInput(buffer)
 
 	var outMsgStream []*messages.Test
 	for i := 0; i < 100; i++ {
@@ -51,6 +51,7 @@ func TestContSendRecv(t *testing.T) {
 		output.SendMsg(outMsg)
 	}
 
+	input := NewProtobufInput(buffer)
 	for i := 0; i < 100; i++ {
 		inMsg := &messages.Test{}
 		err := input.ReadMsg(inMsg)
@@ -63,7 +64,7 @@ func TestContSendRecv(t *testing.T) {
 }
 
 func TestDiscSendRecv(t *testing.T) {
-	buffer := bytes.NewBuffer(nil)
+	buffer := new(bytes.Buffer)
 	output := NewProtobufOutput(buffer)
 	input := NewProtobufInput(buffer)
 
@@ -84,7 +85,7 @@ func TestDiscSendRecv(t *testing.T) {
 }
 
 func TestEmitGeneric(t *testing.T) {
-	buffer := bytes.NewBuffer(nil)
+	buffer := new(bytes.Buffer)
 	output := NewProtobufOutput(buffer)
 	input := NewProtobufInput(buffer)
 
@@ -92,7 +93,7 @@ func TestEmitGeneric(t *testing.T) {
 		num := rand.Int63()
 		numStr := fmt.Sprintf("%d", num)
 		outMsg := newTestObj(numStr, num, []byte(numStr))
-		outMeta := &messages.EmissionMetadata{
+		outMeta := &messages.ShellMsgMeta{
 			Command: "emit",
 			Anchors: []string{"1", "2"},
 			Id:      &numStr,
@@ -102,18 +103,18 @@ func TestEmitGeneric(t *testing.T) {
 		}
 		output.EmitGeneric(outMeta.Command, outMeta.GetId(), outMeta.GetStream(), outMeta.GetMsg(), outMeta.GetAnchors(), outMeta.GetTask(), outMsg)
 
-		emission := &messages.Emission{
-			EmissionProto: &messages.EmissionProto{},
+		shellMsg := &messages.ShellMsg{
+			ShellMsgProto: &messages.ShellMsgProto{},
 		}
-		err := input.ReadMsg(emission)
+		err := input.ReadMsg(shellMsg)
 		checkErr(err, t)
 
-		if !emission.EmissionProto.EmissionMetadata.Equal(outMeta) {
-			t.Fatalf("Emission metadata (%+v) does not equal read emission metadata (%+v)", outMeta, emission.EmissionProto.EmissionMetadata)
+		if !shellMsg.ShellMsgProto.ShellMsgMeta.Equal(outMeta) {
+			t.Fatalf("Emission metadata (%+v) does not equal read emission metadata (%+v)", outMeta, shellMsg.ShellMsgProto.ShellMsgMeta)
 		}
 
 		inMsg := &messages.Test{}
-		err = proto.Unmarshal(emission.EmissionProto.Contents[0], inMsg)
+		err = proto.Unmarshal(shellMsg.ShellMsgProto.Contents[0], inMsg)
 		checkErr(err, t)
 		if !inMsg.Equal(outMsg) {
 			t.Fatalf("Emission data (%+v) does not equal read emission data (%+v)", outMsg, inMsg)
@@ -121,8 +122,8 @@ func TestEmitGeneric(t *testing.T) {
 	}
 }
 
-func TestReadTuple(t *testing.T) {
-	buffer := bytes.NewBuffer(nil)
+func TestReadBoltMsg(t *testing.T) {
+	buffer := new(bytes.Buffer)
 	output := NewProtobufOutput(buffer)
 	input := NewProtobufInput(buffer)
 
@@ -130,9 +131,10 @@ func TestReadTuple(t *testing.T) {
 		num := rand.Int63()
 		numStr := fmt.Sprintf("%d", num)
 		outMsg := newTestObj(numStr, num, []byte(numStr))
-		outTuple := &messages.TupleMsg{
-			TupleProto: &messages.TupleProto{
-				TupleMetadata: &messages.TupleMetadata{
+
+		outTuple := &messages.BoltMsg{
+			BoltMsgProto: &messages.BoltMsgProto{
+				BoltMsgMeta: &messages.BoltMsgMeta{
 					Id:     numStr,
 					Comp:   numStr,
 					Stream: numStr,
@@ -142,15 +144,16 @@ func TestReadTuple(t *testing.T) {
 		}
 		outProto, err := proto.Marshal(outMsg)
 		checkErr(err, t)
-		outTuple.TupleProto.Contents = append(outTuple.TupleProto.Contents, outProto)
+		outTuple.Contents = append(outTuple.Contents, outProto)
 		output.SendMsg(outTuple)
 
 		inMsg := &messages.Test{}
-		inMeta, err := input.ReadTuple(inMsg)
+		inMeta := &messages.BoltMsgMeta{}
+		err = input.ReadBoltMsg(inMeta, inMsg)
 		checkErr(err, t)
 
-		if !inMeta.Equal(outTuple.TupleProto.TupleMetadata) {
-			t.Fatalf("Tuple metadata (%+v) does not equal read Tuple metadata (%+v)", outTuple.TupleProto.TupleMetadata, inMeta)
+		if !inMeta.Equal(outTuple.BoltMsgProto.BoltMsgMeta) {
+			t.Fatalf("Tuple metadata (%+v) does not equal read Tuple metadata (%+v)", outTuple.BoltMsgProto.BoltMsgMeta, inMeta)
 		}
 		if !inMsg.Equal(outMsg) {
 			t.Fatalf("Tuple data (%+v) does not equal read tuple data (%+v)", outMsg, inMsg)

@@ -23,8 +23,8 @@ import (
 )
 
 type Bolt interface {
-	fieldsFactory
-	Execute(meta *stormmsg.TupleMetadata, fields ...interface{})
+	FieldsFactory
+	Execute(meta stormmsg.BoltMsgMeta, fields ...interface{})
 	Prepare(context *stormmsg.Context, collector OutputCollector)
 	Cleanup()
 }
@@ -49,7 +49,7 @@ type OutputCollector interface {
 	EmitDirect(anchors []string, stream string, directTask int64, fields ...interface{})
 }
 
-type fieldsFactory interface {
+type FieldsFactory interface {
 	Fields() []interface{}
 }
 

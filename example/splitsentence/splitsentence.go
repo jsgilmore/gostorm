@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/jsgilmore/gostorm/core"
 	jsonencoding "github.com/jsgilmore/gostorm/encodings/json"
+	"github.com/jsgilmore/gostorm/messages"
 	"log"
 	"os"
 	"os/signal"
@@ -67,7 +68,8 @@ func main() {
 	for {
 		var sentence string
 		// We have to read Raw here, since the spout is not json encoding the tuple contents
-		meta, err := boltConn.ReadTuple(sentence)
+		meta := &messages.BoltMsgMeta{}
+		err := boltConn.ReadBoltMsg(meta, sentence)
 		if err != nil {
 			panic(err)
 		}

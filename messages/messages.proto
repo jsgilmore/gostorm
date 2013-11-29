@@ -36,15 +36,15 @@ message Pid {
 	optional int32 Pid = 1 [(gogoproto.nullable) = false];
 }
 
-message TupleMetadata {
+message BoltMsgMeta {
 	optional string Id = 1 [(gogoproto.nullable) = false];
 	optional string Comp = 2 [(gogoproto.nullable) = false];
 	optional string Stream = 3 [(gogoproto.nullable) = false];
 	optional int64 Task = 4 [(gogoproto.nullable) = false];
 }
 
-message TupleProto {
-	optional TupleMetadata TupleMetadata = 1;
+message BoltMsgProto {
+	optional BoltMsgMeta BoltMsgMeta = 1;
 	repeated bytes Contents = 2;
 }
 
@@ -57,17 +57,18 @@ message SpoutMsg {
 	optional string Id = 2 [(gogoproto.nullable) = false];
 }
 
-message EmissionMetadata {
+message ShellMsgMeta {
 	optional string Command = 1 [(gogoproto.nullable) = false];
 	optional string Id = 2;
 	repeated string Anchors = 3;
 	optional string Stream = 4;
 	optional int64 Task = 5;
-	optional string Msg = 6;
+	optional bool NeedTaskIds = 6;
+	optional string Msg = 7;
 }
 
-message EmissionProto {
-	optional EmissionMetadata EmissionMetadata = 1;
+message ShellMsgProto {
+	optional ShellMsgMeta ShellMsgMeta = 1;
 	repeated bytes Contents = 2;
 }
 

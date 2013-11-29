@@ -28,7 +28,7 @@ type BoltConn interface {
 	Connect()
 	Context() *messages.Context
 	Log(msg string)
-	ReadTuple(contentStructs ...interface{}) (meta *messages.TupleMetadata, err error)
+	ReadBoltMsg(meta *messages.BoltMsgMeta, contentStructs ...interface{}) (err error)
 	SendAck(id string)
 	SendFail(id string)
 	Emit(anchors []string, stream string, content ...interface{}) (taskIds []int32)
@@ -100,7 +100,6 @@ func (this *stormConnImpl) Connect() {
 	if err != nil {
 		panic(fmt.Sprintf("Storm failed to initialise: %v", err))
 	}
-
 	this.reportPid()
 }
 
@@ -125,8 +124,8 @@ type boltConnImpl struct {
 	*stormConnImpl
 }
 
-func newTupleMetadata(id, comp, stream string, task int64) *messages.TupleMetadata {
-	meta := &messages.TupleMetadata{
+func newTupleMetadata(id, comp, stream string, task int64) *messages.BoltMsgMeta {
+	meta := &messages.BoltMsgMeta{
 		Id:     id,
 		Comp:   comp,
 		Stream: stream,

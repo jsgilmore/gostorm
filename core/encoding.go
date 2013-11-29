@@ -23,7 +23,7 @@ import (
 type Input interface {
 	ReadMsg(msg interface{}) (err error)
 	ReadTaskIds() (taskIds []int32)
-	ReadTuple(contentStructs ...interface{}) (metadata *messages.TupleMetadata, err error)
+	ReadBoltMsg(meta *messages.BoltMsgMeta, contentStructs ...interface{}) (err error)
 }
 
 type Output interface {
