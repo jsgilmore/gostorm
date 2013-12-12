@@ -37,6 +37,7 @@ func (this *protobufInputFactory) NewInput(reader io.Reader) core.Input {
 
 func NewProtobufInput(reader io.Reader) core.Input {
 	return &protobufInput{
+		// TODO Only a spout should have an unbuffered byte reader
 		reader:      bufio.NewReader(reader),
 		tupleBuffer: list.New(),
 		bufferPool:  NewBufferPoolSingle(NewAllocatorHeap()),
@@ -176,14 +177,14 @@ func NewProtobufOutput(writer io.Writer) core.Output {
 	}
 
 	return &protobufOutput{
-		writer:     writer,
+		writer:     bufio.NewWriter(writer),
 		bufferPool: NewBufferPoolSingle(NewAllocatorHeap()),
 		shellMsg:   shellMsg,
 	}
 }
 
 type protobufOutput struct {
-	writer     io.Writer
+	writer     *bufio.Writer
 	bufferPool BufferPool
 	shellMsg   *messages.ShellMsg
 }
@@ -206,7 +207,8 @@ type ProtoMarshaler interface {
 
 // sendMsg sends the contents of a known Storm message to Storm
 func (this *protobufOutput) SendMsg(msg interface{}) {
-	protoSiz := msg.(ProtoMarshaler).Size()
+	protoMsg := msg.(ProtoMarshaler)
+	protoSiz := protoMsg.Size()
 	varIntSiz := varintSize(uint64(protoSiz))
 	buffer := this.bufferPool.New(varIntSiz + protoSiz)
 
@@ -215,7 +217,7 @@ func (this *protobufOutput) SendMsg(msg interface{}) {
 		panic(fmt.Sprintf("Actual varint size did not match calculated varint size: %d instead of %d", n, varIntSiz))
 	}
 
-	n, err := msg.(ProtoMarshaler).MarshalTo(buffer[n:])
+	n, err := protoMsg.MarshalTo(buffer[n:])
 	if n+varIntSiz != len(buffer) {
 		panic(fmt.Sprintf("Protobuf: Invalid size written by MarshalTo: %d instead of %d", n, len(buffer)))
 	}
@@ -245,18 +247,21 @@ func (this *protobufOutput) constructOutput(contents ...interface{}) [][]byte {
 	return contentList
 }
 
-func (this *protobufOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{}) {
+func (this *protobufOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, needTaskIds bool, contents ...interface{}) {
 	meta := this.shellMsg.ShellMsgMeta
 	meta.Command = command
 	meta.Anchors = anchors
 	meta.Id = &id
 	meta.Stream = &stream
 	meta.Task = &directTask
-	needTaskIds := true
 	meta.NeedTaskIds = &needTaskIds
 	meta.Msg = &msg
 	this.shellMsg.ShellMsgProto.Contents = this.constructOutput(contents...)
 	this.SendMsg(this.shellMsg)
+}
+
+func (this *protobufOutput) Flush() {
+	this.writer.Flush()
 }
 
 func init() {

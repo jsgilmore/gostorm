@@ -95,6 +95,7 @@ func testSendMsg(buffer *bytes.Buffer, output stormcore.Output, t *testing.T) {
 	for i := 0; i < 100; i++ {
 		msg := fmt.Sprintf("%d", rand.Int63())
 		output.SendMsg(msg)
+		output.Flush()
 		msgEncoded, err := json.Marshal(msg)
 		checkErr(err, t)
 

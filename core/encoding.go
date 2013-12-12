@@ -28,7 +28,8 @@ type Input interface {
 
 type Output interface {
 	SendMsg(msg interface{})
-	EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{})
+	EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, needTaskIds bool, contents ...interface{})
+	Flush()
 }
 
 type InputFactory interface {
@@ -81,11 +82,15 @@ func LookupOutput(encoding string, writer io.Writer) Output {
 func LookupBoltConn(encoding string, reader io.Reader, writer io.Writer) BoltConn {
 	input := LookupInput(encoding, reader)
 	output := LookupOutput(encoding, writer)
-	return NewBoltConn(input, output)
+	// The default is to not require taskIds
+	// This value can be changed using the conn interface
+	return NewBoltConn(input, output, false)
 }
 
 func LookupSpoutConn(encoding string, reader io.Reader, writer io.Writer) SpoutConn {
 	input := LookupInput(encoding, reader)
 	output := LookupOutput(encoding, writer)
-	return NewSpoutConn(input, output)
+	// The default is to not require taskIds
+	// This value can be changed using the conn interface
+	return NewSpoutConn(input, output, false)
 }

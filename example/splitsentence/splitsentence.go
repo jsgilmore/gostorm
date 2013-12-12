@@ -62,7 +62,7 @@ func main() {
 
 	input := jsonencoding.NewJsonObjectInput(os.Stdin)
 	output := jsonencoding.NewJsonObjectOutput(os.Stdout)
-	boltConn := core.NewBoltConn(input, output)
+	boltConn := core.NewBoltConn(input, output, false)
 	boltConn.Connect()
 
 	for {

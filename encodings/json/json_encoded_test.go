@@ -54,7 +54,8 @@ func TestEncodedEmitGeneric(t *testing.T) {
 			Task:    &num,
 			Msg:     &numStr,
 		}
-		output.EmitGeneric(outMeta.Command, outMeta.GetId(), outMeta.GetStream(), outMeta.GetMsg(), outMeta.GetAnchors(), outMeta.GetTask(), outMsg)
+		output.EmitGeneric(outMeta.Command, outMeta.GetId(), outMeta.GetStream(), outMeta.GetMsg(), outMeta.GetAnchors(), outMeta.GetTask(), true, outMsg)
+		output.Flush()
 
 		shellMsg := &messages.ShellMsg{
 			ShellMsgJson: &messages.ShellMsgJson{},
@@ -101,6 +102,7 @@ func TestEncodedReadBoltMsg(t *testing.T) {
 		checkErr(err, t)
 		outTuple.BoltMsgJson.Contents = append(outTuple.BoltMsgJson.Contents, outJson)
 		output.SendMsg(outTuple)
+		output.Flush()
 
 		inMsg := &testObj{}
 		inMeta := &messages.BoltMsgMeta{}

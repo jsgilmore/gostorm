@@ -95,16 +95,17 @@ func (this *jsonObjectOutput) constructOutput(contents ...interface{}) []interfa
 	return contentList
 }
 
-func (this *jsonObjectOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{}) {
+func (this *jsonObjectOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, needTaskIds bool, contents ...interface{}) {
 	shellMsg := &messages.ShellMsg{
 		ShellMsgJson: &messages.ShellMsgJson{
 			ShellMsgMeta: &messages.ShellMsgMeta{
-				Command: command,
-				Anchors: anchors,
-				Id:      &id,
-				Stream:  &stream,
-				Task:    &directTask,
-				Msg:     &msg,
+				Command:     command,
+				Anchors:     anchors,
+				Id:          &id,
+				Stream:      &stream,
+				Task:        &directTask,
+				NeedTaskIds: &needTaskIds,
+				Msg:         &msg,
 			},
 			Contents: this.constructOutput(contents...),
 		},

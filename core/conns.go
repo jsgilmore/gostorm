@@ -48,10 +48,11 @@ type SpoutConn interface {
 
 // newStormConn creates a new generic Storm connection
 // This connection must be embedded in either a spout or bolt
-func newStormConn(in Input, out Output) *stormConnImpl {
+func newStormConn(in Input, out Output, needTaskIds bool) *stormConnImpl {
 	stormConn := &stormConnImpl{
-		Input:  in,
-		Output: out,
+		Input:       in,
+		Output:      out,
+		needTaskIds: needTaskIds,
 	}
 	return stormConn
 }
@@ -60,7 +61,8 @@ func newStormConn(in Input, out Output) *stormConnImpl {
 type stormConnImpl struct {
 	Input
 	Output
-	context *messages.Context
+	context     *messages.Context
+	needTaskIds bool
 }
 
 func (this *stormConnImpl) readContext() (context *messages.Context, err error) {
@@ -78,6 +80,7 @@ func (this *stormConnImpl) reportPid() {
 		Pid: int32(os.Getpid()),
 	}
 	this.SendMsg(msg)
+	this.Flush()
 
 	// Write an empty file with the pid, which storm can use to kill our process
 	pidFile, err := os.Create(filepath.Join(this.Context().PidDir, strconv.Itoa(os.Getpid())))
@@ -109,13 +112,15 @@ func (this *stormConnImpl) Context() *messages.Context {
 
 // Log sends a log message that will be logged by Storm
 func (this *stormConnImpl) Log(text string) {
-	this.EmitGeneric("log", "", "", text, nil, 0)
+	this.EmitGeneric("log", "", "", text, nil, 0, false)
+	// Logs are flushed immediatly to aid in debugging
+	this.Flush()
 }
 
 // NewBoltConn returns a Storm bolt connection that a Go bolt can use to communicate with Storm
-func NewBoltConn(in Input, out Output) BoltConn {
+func NewBoltConn(in Input, out Output, needTaskIds bool) BoltConn {
 	boltConn := &boltConnImpl{
-		stormConnImpl: newStormConn(in, out),
+		stormConnImpl: newStormConn(in, out, needTaskIds),
 	}
 	return boltConn
 }
@@ -138,13 +143,13 @@ func newTupleMetadata(id, comp, stream string, task int64) *messages.BoltMsgMeta
 // SendAck has to be called after an emission anchored to the acked id,
 // otherwise Storm will report an error.
 func (this *boltConnImpl) SendAck(id string) {
-	this.EmitGeneric("ack", id, "", "", nil, 0)
+	this.EmitGeneric("ack", id, "", "", nil, 0, false)
 }
 
 // SendFail reports that the message with the given Id failed
 // No emission should be anchored to a failed message Id
 func (this *boltConnImpl) SendFail(id string) {
-	this.EmitGeneric("fail", id, "", "", nil, 0)
+	this.EmitGeneric("fail", id, "", "", nil, 0, false)
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,
@@ -153,7 +158,11 @@ func (this *boltConnImpl) SendFail(id string) {
 // The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...interface{}) (taskIds []int32) {
 	this.EmitDirect(anchors, stream, 0, contents...)
-	return this.ReadTaskIds()
+	if this.needTaskIds {
+		return this.ReadTaskIds()
+	} else {
+		return nil
+	}
 }
 
 // EmitDirect emits a tuple with the given array of interface{}s as values,
@@ -164,13 +173,13 @@ func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...inte
 // A stream value of "" or "default" can be used to denote the default stream
 // The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) EmitDirect(anchors []string, stream string, directTask int64, contents ...interface{}) {
-	this.EmitGeneric("emit", "", stream, "", anchors, directTask, contents...)
+	this.EmitGeneric("emit", "", stream, "", anchors, directTask, this.needTaskIds, contents...)
 }
 
 // NewSpoutConn returns a Storm spout connection that a Go spout can use to communicate with Storm
-func NewSpoutConn(in Input, out Output) SpoutConn {
+func NewSpoutConn(in Input, out Output, needTaskIds bool) SpoutConn {
 	spoutConn := &spoutConnImpl{
-		stormConnImpl: newStormConn(in, out),
+		stormConnImpl: newStormConn(in, out, needTaskIds),
 	}
 	return spoutConn
 }
@@ -202,8 +211,9 @@ func (this *spoutConnImpl) ReadSpoutMsg() (command, id string, err error) {
 // emit a message before a ReadMsg has been performed. This is to
 // enforce the synchronous behaviour of a spout as required by Storm.
 func (this *spoutConnImpl) SendSync() {
-	this.EmitGeneric("sync", "", "", "", nil, 0)
+	this.EmitGeneric("sync", "", "", "", nil, 0, false)
 	this.readyToSend = false
+	this.Flush()
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,
@@ -212,7 +222,11 @@ func (this *spoutConnImpl) SendSync() {
 // The function returns a list of taskIds to which the message was sent.
 func (this *spoutConnImpl) Emit(id string, stream string, contents ...interface{}) (taskIds []int32) {
 	this.EmitDirect(id, stream, 0, contents...)
-	return this.ReadTaskIds()
+	if this.needTaskIds {
+		return this.ReadTaskIds()
+	} else {
+		return nil
+	}
 }
 
 // EmitDirect emits a tuple with the given array of interface{}s as values,
@@ -225,5 +239,5 @@ func (this *spoutConnImpl) EmitDirect(id string, stream string, directTask int64
 	if !this.readyToSend {
 		panic("Spout not ready to send")
 	}
-	this.EmitGeneric("emit", id, stream, "", nil, directTask, contents...)
+	this.EmitGeneric("emit", id, stream, "", nil, directTask, this.needTaskIds, contents...)
 }

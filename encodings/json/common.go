@@ -101,12 +101,12 @@ func (this *jsonInput) ReadTaskIds() (taskIds []int32) {
 
 func newJsonOutput(writer io.Writer) *jsonOutput {
 	return &jsonOutput{
-		writer: writer,
+		writer: bufio.NewWriter(writer),
 	}
 }
 
 type jsonOutput struct {
-	writer io.Writer
+	writer *bufio.Writer
 }
 
 // sendMsg sends the contents of a known Storm message to Storm
@@ -118,4 +118,8 @@ func (this *jsonOutput) SendMsg(msg interface{}) {
 	fmt.Fprintln(this.writer, string(data))
 	// Storm requires that every message be suffixed with an "end" string
 	fmt.Fprintln(this.writer, "end")
+}
+
+func (this *jsonOutput) Flush() {
+	this.writer.Flush()
 }

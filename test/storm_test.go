@@ -145,7 +145,7 @@ func TestInit(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	boltConn := stormcore.NewBoltConn(input, output)
+	boltConn := stormcore.NewBoltConn(input, output, true)
 	boltConn.Connect()
 
 	expectPid(outBuffer, t)
@@ -160,7 +160,7 @@ func TestLog(t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	spoutConn := stormcore.NewSpoutConn(input, output)
+	spoutConn := stormcore.NewSpoutConn(input, output, true)
 	spoutConn.Connect()
 
 	expectPid(outBuffer, t)
@@ -193,7 +193,7 @@ func TestReadTuple(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(buffer)
 	output := stormenc.NewJsonObjectOutput(os.Stdout)
-	boltConn := stormcore.NewBoltConn(input, output)
+	boltConn := stormcore.NewBoltConn(input, output, true)
 	boltConn.Connect()
 
 	var msg string
@@ -216,7 +216,7 @@ func TestSendAck(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	boltConn := stormcore.NewBoltConn(input, output)
+	boltConn := stormcore.NewBoltConn(input, output, true)
 	boltConn.Connect()
 
 	var ids []string
@@ -226,6 +226,7 @@ func TestSendAck(t *testing.T) {
 
 		boltConn.SendAck(id)
 	}
+	output.Flush()
 
 	expect(fmt.Sprintf(`{"pid":%d}`, os.Getpid()), outBuffer, t)
 	expect("end", outBuffer, t)
@@ -245,7 +246,7 @@ func TestSendFail(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	boltConn := stormcore.NewBoltConn(input, output)
+	boltConn := stormcore.NewBoltConn(input, output, true)
 	boltConn.Connect()
 
 	var ids []string
@@ -255,6 +256,7 @@ func TestSendFail(t *testing.T) {
 
 		boltConn.SendFail(id)
 	}
+	output.Flush()
 
 	expect(fmt.Sprintf(`{"pid":%d}`, os.Getpid()), outBuffer, t)
 	expect("end", outBuffer, t)
@@ -305,7 +307,7 @@ func testBoltEmit(taskIdsList [][]int32, inBuffer io.Reader, t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	boltConn := stormcore.NewBoltConn(input, output)
+	boltConn := stormcore.NewBoltConn(input, output, true)
 	boltConn.Connect()
 
 	expectPid(outBuffer, t)
@@ -319,6 +321,7 @@ func testBoltEmit(taskIdsList [][]int32, inBuffer io.Reader, t *testing.T) {
 		metaTest(meta, i, t)
 
 		taskIds := boltConn.Emit([]string{}, "", fmt.Sprintf("Msg%d", i))
+		output.Flush()
 
 		// Expect task Ids
 		if len(taskIds) != len(taskIdsList[i]) {
@@ -422,7 +425,7 @@ func TestReadMsg(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(buffer)
 	output := stormenc.NewJsonObjectOutput(os.Stdout)
-	spoutConn := stormcore.NewSpoutConn(input, output)
+	spoutConn := stormcore.NewSpoutConn(input, output, true)
 	spoutConn.Connect()
 
 	for i := 0; i < 6; i++ {
@@ -445,7 +448,7 @@ func TestSendSync(t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	spoutConn := stormcore.NewSpoutConn(input, output)
+	spoutConn := stormcore.NewSpoutConn(input, output, true)
 	spoutConn.Connect()
 
 	expectPid(outBuffer, t)

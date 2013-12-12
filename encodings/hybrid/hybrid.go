@@ -159,12 +159,12 @@ func (this *hybridOutputFactory) NewOutput(writer io.Writer) core.Output {
 
 func NewHybridOutput(writer io.Writer) core.Output {
 	return &hybridOutput{
-		writer: writer,
+		writer: bufio.NewWriter(writer),
 	}
 }
 
 type hybridOutput struct {
-	writer io.Writer
+	writer *bufio.Writer
 }
 
 // sendMsg sends the contents of a known Storm message to Storm
@@ -190,21 +190,26 @@ func (this *hybridOutput) constructOutput(contents ...interface{}) []interface{}
 	return contentList
 }
 
-func (this *hybridOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, contents ...interface{}) {
+func (this *hybridOutput) EmitGeneric(command, id, stream, msg string, anchors []string, directTask int64, needTaskIds bool, contents ...interface{}) {
 	shellMsg := &messages.ShellMsg{
 		ShellMsgJson: &messages.ShellMsgJson{
 			ShellMsgMeta: &messages.ShellMsgMeta{
-				Command: command,
-				Anchors: anchors,
-				Id:      &id,
-				Stream:  &stream,
-				Task:    &directTask,
-				Msg:     &msg,
+				Command:     command,
+				Anchors:     anchors,
+				Id:          &id,
+				Stream:      &stream,
+				Task:        &directTask,
+				NeedTaskIds: &needTaskIds,
+				Msg:         &msg,
 			},
 			Contents: this.constructOutput(contents...),
 		},
 	}
 	this.SendMsg(shellMsg)
+}
+
+func (this *hybridOutput) Flush() {
+	this.writer.Flush()
 }
 
 func init() {

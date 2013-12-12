@@ -50,6 +50,7 @@ func TestContSendRecv(t *testing.T) {
 		outMsgStream = append(outMsgStream, outMsg)
 		output.SendMsg(outMsg)
 	}
+	output.Flush()
 
 	input := NewProtobufInput(buffer)
 	for i := 0; i < 100; i++ {
@@ -73,6 +74,7 @@ func TestDiscSendRecv(t *testing.T) {
 		numStr := fmt.Sprintf("%d", num)
 		outMsg := newTestObj(numStr, num, []byte(numStr))
 		output.SendMsg(outMsg)
+		output.Flush()
 
 		inMsg := &messages.Test{}
 		err := input.ReadMsg(inMsg)
@@ -104,7 +106,8 @@ func TestEmitGeneric(t *testing.T) {
 			NeedTaskIds: &needTaskIds,
 			Msg:         &numStr,
 		}
-		output.EmitGeneric(outMeta.Command, outMeta.GetId(), outMeta.GetStream(), outMeta.GetMsg(), outMeta.GetAnchors(), outMeta.GetTask(), outMsg)
+		output.EmitGeneric(outMeta.Command, outMeta.GetId(), outMeta.GetStream(), outMeta.GetMsg(), outMeta.GetAnchors(), outMeta.GetTask(), true, outMsg)
+		output.Flush()
 
 		shellMsg := &messages.ShellMsg{
 			ShellMsgProto: &messages.ShellMsgProto{},
@@ -149,6 +152,7 @@ func TestReadBoltMsg(t *testing.T) {
 		checkErr(err, t)
 		outTuple.Contents = append(outTuple.Contents, outProto)
 		output.SendMsg(outTuple)
+		output.Flush()
 
 		inMsg := &messages.Test{}
 		inMeta := &messages.BoltMsgMeta{}
