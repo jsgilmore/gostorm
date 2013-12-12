@@ -8,11 +8,9 @@ GoStorm also correctly handles the asynchronous behaviour of bolts i.t.o. task I
 
 Currently, the main purpose of GoStorm is to act as a library for Go spouts and bolts that wish to interact with a Storm topology. The topology definition itself should still be done in Java and a shell spout or bolt is still required for each Go spout or bolt. See the storm-starter WordCountTopology on how to do this.
 
-For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the storm-starter WordCountTopology (https://github.com/nathanmarz/storm-starter). GoStorm also contains mock conn implementations that allows a developer to test her code code, before having to submit it as part of a Storm cluster.
+For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the [storm-starter](https://github.com/nathanmarz/storm-starter) WordCountTopology. GoStorm also contains mock output collector implementations that allows a developer to test her code code, before having to submit it as part of a Storm cluster.
 
-GoStorm implements the complete Storm communications protocol as described in https://github.com/nathanmarz/storm/wiki/Multilang-protocol. GoStorm doesn't just implement the Storm communication protocol, but enforces it. It ensures that all function calls are valid and if invalid function calls are performed, it informs the user of why the call is invalid.
-
-Apart from implementing the multilang JSON protocol that is used by Storm shell components, GoStorm also implements a pure protocol buffer encoding scheme for improved performance.
+GoStorm implements (and enforces) the Storm [multilang protocol](https://github.com/nathanmarz/storm/wiki/Multilang-protocol). Apart from implementing the multilang JSON protocol that is used by Storm shell components, GoStorm also implements a protocol buffer binary encoding scheme for improved performance. The protocol buffer encoding requires the Storm [protoshell](https://github.com/jsgilmore/protoshell) multilang serialiser. Currently, [my customised version of Storm](https://github.com/jsgilmore/storm) is required to use the protocol buffer serialiser plugin. A pull request has been created for this improvement and my version of Storm always closely tracks the upstream Storm.
 
 ##Encoding
 GoStorm implements various encoding schemes with varying levels of performance:
@@ -30,218 +28,158 @@ The hybrid scheme also sends byte slices, but the user objects are expected to b
 
 The protobuf scheme is a pure protocol buffer encoding and requires specialised Storm ProtoShell components. These ProtoShell components have already been implemented and I'll paste a link soon. The protobuf encoding is a binary encoding scheme that transmits varints followed by byte slices. No text encodings or "end" strings, which makes it more compact.
 
-I would suggest starting with the jsonencoded scheme and benchmarking your application. If the throughput doesn't suit your needs, starts converting your project to use protocol buffers. And see which of the protocol buffers schemes meet your needs.
+I would suggest starting with the jsonencoded scheme and benchmarking your application. If the throughput doesn't suit your needs, start converting your project to use protocol buffers. This allows for the hybrid scheme to be used, without requiring any changes to Storm. For best performance, the protobuf encoding can be used, but this requires some changes in the Storm cluster's configuration.
 
-##Interfaces
-The GoStorm library contains a spoutConn and a boltConn that you can use to implement a spout or bolt respectively. The respective interfaces are:
+##Bolts
+This section will describe how to write bolts using the GoStorm library.
+
+###Creating a bolt
+To create a bolt, you just have to create a Go "object" that implements the Bolt interface:
 ```go
-// BoltConn is the interface that implements the possible bolt actions
-type BoltConn interface {
-	Initialise()
-	Context() *messages.Context
-	Log(msg string)
-	ReadTuple(contentStructs ...interface{}) (meta *messages.TupleMetadata, err error)
-	SendAck(id string)
-	SendFail(id string)
-	Emit(anchors []string, stream string, content ...interface{}) (taskIds []int32)
-	EmitDirect(anchors []string, stream string, directTask int64, contents ...interface{})
+type Bolt interface {
+    FieldsFactory
+    Execute(meta stormmsg.BoltMsgMeta, fields ...interface{})
+    Prepare(context *stormmsg.Context, collector OutputCollector)
+    Cleanup()
 }
 
-// SpoutConn is the interface that implements the possible spout actions
-type SpoutConn interface {
-	Initialise()
-	Context() *messages.Context
-	Log(msg string)
-	ReadSpoutMsg() (command, id string, err error)
-	SendSync()
-	Emit(id string, stream string, contents ...interface{}) (taskIds []int32)
-	EmitDirect(id string, stream string, directTask int64, contents ...interface{})
+type FieldsFactory interface {
+    Fields() []interface{}
 }
 ```
 
-##Creating a boltConn
+Prepare can be used to setup a bolt and will be called once, before a bolt receives any messages. Prepare supplies the bolt with the topology context and the output collector, which the bolt can use to emit messages.
 
-Usually, you will be writing Storm bolts, so I shall focus on how to use GoStorm to write bolts. Firstly, you need to create the required boltConn. The most flexible way to do this is:
+A bolt receives messages with the Execute method. BoltMsgMeta contains information about the received message, namely: id, comp, stream, task. The fields are the tuple fields (objects) that were emitted by the input component.
+
+Cleanup is called if the topology completes. This will only happen during testing, for finite input streams.
+
+The fields factory declares the message types that the bolt expects to receive. In other words, these fields must match the field types of the execute method. Specifically, GoStorm uses these empty objects to marshal received objects into. 
+
+To write a bolt, import the following:
 ```go
 import (
-    stormcore "github.com/jsgilmore/gostorm/core"
-    _ "github.com/jsgilmore/gostorm/encodings/all"
-    "io"
+    "github.com/jsgilmore/gostorm"
+    stormmsg "github.com/jsgilmore/gostorm/messages"
 )
-
-func getBoltConn(encoding string, reader io.Reader, writer io.Writer) (boltConn stormcore.BoltConn) {
-	boltConn = stormcore.LookupBoltConn(encoding, reader, writer)
-	boltConn.Initialise()
-	return
-}
 ```
 
-The GoStorm library makes use of a registry pattern, where each encoding registers itself with GoStorm. The storm developer can use the lookup functions to retrieve spout and bolt conns with the required encoding. It should be noted that for an encoding to be available for lookup, it still has to be imported as:  _ "github.com/jsgilmore/gostorm/encoding/json". Or you can import all available encodings using: _ "github.com/jsgilmore/gostorm/encodings/all", as shown in the above example.
+The gostorm import contains the spout and bolt interfaces and the messages import contains the required gostorm message types.
 
-Input encodings require an io.Reader and output encodings require an io.Writer. This is the interface over which it will try to communicate. For standard Storm functionality, these are os.Stdin and os.Stdout. Always ensure that the boltConn is Initialised, before you start using it. It will panic otherwise. During initialisation, the boltConn connects to Storm and performs various setup functions with Storm (like obtaining the topology configuration and communicating its pid).
-
-A more explicit way to create a BoltConn is:
+###Running a bolt
+All that remains is for you to write a main method for your bolt. The main method will run the bolt, specify the encoding that might be used and state whether destination task ids are required (more on that later). It will typically look something like this:
 ```go
+package main
+
 import (
-    stormcore "github.com/jsgilmore/gostorm/core"
-    stormjson "github.com/jsgilmore/gostorm/encoding/json"
-    "os"
+    "github.com/jsgilmore/gostorm"
+    _ "github.com/jsgilmore/gostorm/encodings"
 )
 
-func getBoltConn() (boltConn stormcore.BoltConn) {
-    input := stormjson.NewJsonEncodedInput(os.Stdin)
-    output := stormjson.NewJsonEncodedOutput(os.Stdout)
-    boltConn := stormcore.NewBoltConn(input, output)
-    boltConn.Initialise()
+func main() {
+    encoding := "jsonEncoded"
+    needTaskIds := false
+    myBolt := NewMyBolt()
+    gostorm.RunBolt(myBolt, encoding, needTaskIds)
 }
 ```
 
-In this example, the encoding, input and output interfaces are fixed at compile time. Note that the spoutConn creation process is identical to the boltConn creation process.
+The gostorm import contains the RunBolt function. The encodings import imports all GoStorm encodings and allows any of them to be specified in the RunBolt method. This also allows you to use a Go flag and specify the encoding to use at runtime.
 
-##The Bolt Run() loop
-After the boltConn is created, your bolt can start using. This is usually in the form of a Run() loop that is part of your Go "object":
+###Emitting tuples
+To emit tuples (objects) to another bolt, the bolt output collector is used:
 ```go
-func (this *myBolt) Run() {
-    for {
-        msg1 := &MyFirstMsg{}
-        msg2 := &MySecondMsg{}
-        meta, err := this.boltConn.ReadTuple(msg1, msg2)
-        if err != nil {
-            panic(err)
-        }
-        this.Event(msg1, msg2)
-        this.boltConn.SendAck(meta.Id)
-    }
+type OutputCollector interface {
+    SendAck(id string)
+    SendFail(id string)
+    Emit(anchors []string, stream string, fields ...interface{}) (taskIds []int32)
+    EmitDirect(anchors []string, stream string, directTask int64, fields ...interface{})
 }
 ```
 
-The above code shows an example of the run loop. It continuously reads messages from Storm and handles those messages. To read messages from Storm, you have to call the ReadTuple function and pass it empty non-nil structures for GoStorm to populate. Take not that you can emit and receive any number of messages.
+SendAck acks a received message. SendFail fails a received message.
 
-After receiving objects from ReadTuple, the Event message handler function is called. The message handler logic is contained in the Event function. To enable you to chain Storm spout and bolts together during integration testing, your bolt should implement the Consumer interface:
-```go
-type Consumer interface {
-    Event(msgs ...interface{})
-}
-```
-You can then create GoStorm mock spouts and bolts and give them your bolt objects as the consumers in the chain.
-
-##Emitting tuples
-To emit tuples (objects) to another bolt, the Emit and EmitDirect functions can be used:
-```go
-import (
-    "github.com/jsgilmore/gostorm/messages"
-)
-
-func (this *myBolt) emitRecord(meta *messages.TupleMetadata, key string, msg *myMsgType) {
-	event := &myBoltEvent{
-		Message: msg,
-	}
-	this.boltConn.Emit([]string{meta.Id}, "default", key, event)
-	this.boltConn.SendAck(meta.Id)
-}
-```
+Emit emits a tuple (set of fields). Emit tuple returns the destination task IDs to which the message was emitted if this option was set in the RunBolt function, otherwise it returns nil.
 
 The parameters required by the Emit function are:
-
 1. List of tuple IDs to anchor this emission to.
 2. The output stream to emit the tuple on.
 3. A list of objects that should be emitted.
 
-Tuple emissions may be anchored to received tuples. This specifies that the current emission is as a result of the earlier received tuple. An emission may be anchored to multiple received tuples (say you joined some tuples to create a compound tuple), which is why a list is required. Anchoring emissions to received tuples will have the effect that the original emission at the spout will only be acked after all resulting emissions have been acked. If any resultant emission is fail, the spout will immediately receive a failure notification from Storm. If an emission fails to be acked within some timeout period (30s default), the spout originating the emission will also receive a failure notification.
+Tuple emissions may be anchored to received tuples. This specifies that the current emission is as a result of the earlier received tuple. An emission may be anchored to multiple received tuples (say you joined some tuples to create a compound tuple), which is why a list is required. An emission does not have to be anchored, in which case the parameter can be set to nil. Anchoring emissions to received tuples will have the effect that the original emission at the spout will only be acked after all resulting emissions have been acked. If any resultant emission is failed, the spout will immediately receive a failure notification from Storm. If an emission fails to be acked within some timeout period (30s default), the spout originating the emission will also receive a failure notification.
 
-If you bolt only has one output stream, you can just use the "default" string, or the empty ("") string.
+If the bolt has a single output stream, the "default" or the empty ("") string can be used.
 
-A union message type is always emitted (myBoltEvent). The union message contains pointers to all the message types that our bolt can emit. Whenever a message is emitted, it is first placed in the union message structure. This way, the received always knows what message type to cast to and can then check for a non-nil element in the union message.
+The EmitDirect function can be used to emit a tuple directly to a task.
+
+### Message unions
+A union message type is always emitted (myBoltEvent). The union message contains pointers to all the message types that our bolt can emit. Whenever a message is emitted, it is first placed in the union message structure. This way, the receiver always knows what message type to cast to and can then check for a non-nil element in the union message.
 
 The last two objects in the Emit call are the contents of the message that will be transferred to the receiving bolt in the form that they are Emitted here. It is possible to specify any number of objects. In the above example, we specified a ket and a message. The first field will be used to group tuples on as part of a fieldsGrouping that will be shown when the topology definition is shown.
 
 To ensure the "at least once" processing semantics of Storm, every tuple that is receive should be acknowledged, either by an Ack or a Fail. This is done by the SendAck and SendFail functions that is part of the boltConn interface. To enable Storm to build up its ack directed acyclic graph (DAG): no emission may be anchored to a tuple that has already been acked. The Storm topology will panic if this occurs.
 
-##Spout usage
+##Spouts
+This section will describe how to write spouts using the GoStorm library.
 
-SpoutConns can be created similarly to boltConns.
-
-Since spouts are synchronous, a spout has to wait for next, ack or fail messages from Storm before it may send messages. After a spout has sent the messages it wishes to send, it has to send a sync message to Storm. The sync message signals that a spout will not send any more messages until the next "next", "ack" or "fail" message is received.
-
-Therefore, to emit one tuple for each progress message as a custom spout (mySpoutImpl), implement the following Emit function:
+###Creating spouts
+Similarly to bolts in GoStorm, to create a spout, the Spout interface should be implemented:
 ```go
-func (this *mySpoutImpl) Emit(msg interface{}) {
-    command, id, err := this.spoutConn.ReadSpoutMsg()
-    if err != nil {
-        panic(err)
-    }
-
-    switch command {
-    case "next":
-        this.emit()
-    case "ack":
-        this.handleAck(id)
-    case "fail":
-        this.handleFail(id)
-    default:
-        panic("Unknown command received from Storm")
-    }
-    this.spoutConn.SendSync()
+type Spout interface {
+	NextTuple()
+	Acked(id string)
+	Failed(id string)
+	Exit()
+	Open(context *stormmsg.Context, collector SpoutOutputCollector)
 }
 ```
 
-##Testing without Storm
-It's possible to link up GoStorm spouts and bolts using the mockConn implementations of GoStorm. This does not require a running Storm cluster or indeed anything other than the GoStorm library.
+When a spouts starts, GoStorm will call Open on it to provide it with the Storm context and a spout output collector.
 
-To be able to link up a bolt into a mock topology, the bolt has to implement the Consumer interface:
-```go
-type Consumer interface {
-    Event(msgs ...interface{})
-}
-```
+Spouts in Storm are synchronous, which means a spout has to wait for NextTuple, Acked, or Failed to be called on it, before it may emit messages. GoStorm will never call any spout (or bolt) functions concurrently.
 
-An example of defining a mock topology:
+The Acked and Failed functions inform a spout that the tuple emited with the specified ID was acked or failed respectively. When Acked or Failed is called on a spout, emissions are possible, but it should be kept in mind that always emitting tuples when Storm informs a spout of another tuples state may lead to runaway behaviour.
+
+A spout can emit tuples when NextTuple is called on it. It may emit any number of tuples, but the developer should keep in mind that emitting multiple tuples will increase message latency in the topology.
+
+###Running a spout
+Very similarly to running bolts, a main method has to be created to run the spout, specify the encoding that might be used and state whether destination task ids are required. It will typically look something like this:
 ```go
+package main
+
 import (
-    mockstorm "github.com/jsgilmore/gostorm/mock"
-    "testing"
+    "github.com/jsgilmore/gostorm"
+    _ "github.com/jsgilmore/gostorm/encodings"
 )
 
-func makeBolt(consumer mockstorm.Consumer) *boltImpl {
-    boltConn := mockstorm.NewMockBoltConn(consumer)
-    boltConn.Initialise()
-    return NewBolt(boltConn)
-}
-
-func makeSpout(consumer mockstorm.Consumer) mockstorm.Runner {
-    spoutConn := mockstorm.NewMockSpoutConn(consumer)
-    spoutConn.Initialise()
-    return NewSpout(spoutConn)
-}
-
-func TestIntegratedTopology(t *testing.T) {
-    bolt := makeBolt(mockstorm.NewPrinter())
-    spout := makeSpout(bolt)
-    spout.Run()
-    spout.Close()
-    bolt.Close()
+func main() {
+    encoding := "jsonEncoded"
+    needTaskIds := false
+    mySpout := NewMySpout()
+    gostorm.RunSpout(mySpout, encoding, needTaskIds)
 }
 ```
 
-To simplify the design of Storm components that can either run as part of a Storm cluster or mock components, the storm conn should be made injectable, i.e. when the component is created a storm conn is passed as parameter. Making the storm conn injectable allows for a real Storm conn to be used in the main method of the program when running as part of a Storm cluster and a mock Storm conn to be used when running unit tests.
+###Emitting tuples
+```go
+type SpoutOutputCollector interface {
+    Emit(id string, stream string, fields ...interface{}) (taskIds []int32)
+    EmitDirect(id string, stream string, directTask int64, fields ...interface{})
+}
+```
 
-The process of testing a GoStorm topology as a mock topology involves the creation of all topology components in reverse order, where the input for each component is a mock conn, created with the next component as consumer parameter. When all component have been linked, the spout should be Run. This will start a single process that contains all the elements in the topology. When the spout completes, all created spouts and bolts should be closed.
+A spout can emit tuples using the Emit or EmitDirect functions of the spout output collector.
 
-The idea of a Spout completing might not make sense for a streaming computational framework such as Storm, but it is a desirable quality when testing. To design a spout that completes, an input file might be used, instead of the spout's usual input stream, and when an EOF is received, the spout can close. This design leads to a spout that can be used as part of a Storm cluster, as well as for testing.
+The parameters required by the Emit function are:
+1. The id of the tuple to emit.
+2. The output stream to emit the tuple on.
+3. A list of objects that should be emitted.
 
-The last component of a mock topology requires a mock conn with some termination consumer. In the above example, this termination consumer if the printer comsumer that is part of the mock gostorm implementation. This printer consumer just prints all emissions to stdout.
+The ID with which the tuple is emitted will be the ID provided in the Acked and Failed functions.
 
-Because mock conns do not connect to a real Storm topology and because the mock conn implementation in GoStorm is still fairly immature, there are some important differences (and shortcomings) between mock components and real components that should be taken into account when testing:
+The output stream and object tuple list is the same as with bolt emissions.
 
-1. Mock components use no serialisation. Objects are sent along without any encoding. This means that mock performance might be greatly increased from real performance.
-2. When reading a spout message as a spout, a next message will always immediatly be returned.
-3. When emitting a message, only the objects that would form the contents of the emission are sent to the consumer. No metadata are sent.
-4. No acks or fails will be delivered to spouts.
-5. Bolts sending acks or fails have no effect.
-6. Bolts reading Tuples return nil. The idea is that the readTuple function is called from the bolt's run loop, which calls the bolt's event function. The mock implementation bypasses a bolt's run loop, to directly call the event function of the consumer.
-7. Indirect emissions always return the taskId: 1, without any regard for which component in the mock topology an emission was transmitted to.
-8. Mock conns have no context (task-component mapping, taskId, pidDir). Requesting the context of a mock conn will return nil.
-9. Initialising mock components currently does nothing. No context is retrieved and no pid is communicated or written to file.
-10. Logging a message prints the log message to stdout.
-11. EmitDirect works the same as Emit (i.e. sends the object directly to the consumer).
-12. A spout sending a sync does nothing.
+##Testing without Storm
+It's possible to link up GoStorm spouts and bolts using the mockOutputCollector implementations of GoStorm. This does not require a running Storm cluster or indeed anything other than the GoStorm library. Mock output collectors is a basic way of strigning some Storm components together, while manually calling Execute on a bolt to get the topology running. I am hopefull of obtaining a GoStorm local mode controbution within the next few months. The GoStorm local mode will allow spouts and bolts to be connected in a single process and acks and fails are also handled correctly.
+
+Because mock collectors do not connect to a real Storm topology and because the mock collector implementation in GoStorm is still fairly immature, there are some important differences (and shortcomings) between mock components and real components that should be taken into account when testing:
