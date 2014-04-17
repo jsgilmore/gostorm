@@ -92,5 +92,5 @@ func LookupSpoutConn(encoding string, reader io.Reader, writer io.Writer) SpoutC
 	output := LookupOutput(encoding, writer)
 	// The default is to not require taskIds
 	// This value can be changed using the conn interface
-	return NewSpoutConn(input, output, false)
+	return NewSpoutConn(input, output)
 }
