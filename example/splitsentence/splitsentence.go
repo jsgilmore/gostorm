@@ -69,7 +69,7 @@ func main() {
 		var sentence string
 		// We have to read Raw here, since the spout is not json encoding the tuple contents
 		meta := &messages.BoltMsgMeta{}
-		err := boltConn.ReadBoltMsg(meta, sentence)
+		err := boltConn.ReadBoltMsg(meta, &sentence)
 		if err != nil {
 			panic(err)
 		}
