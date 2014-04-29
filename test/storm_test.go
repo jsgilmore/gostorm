@@ -160,7 +160,7 @@ func TestLog(t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	spoutConn := stormcore.NewSpoutConn(input, output)
+	spoutConn := stormcore.NewSpoutConn(input, output, true)
 	spoutConn.Connect()
 
 	expectPid(outBuffer, t)
@@ -425,7 +425,7 @@ func TestReadMsg(t *testing.T) {
 
 	input := stormenc.NewJsonObjectInput(buffer)
 	output := stormenc.NewJsonObjectOutput(os.Stdout)
-	spoutConn := stormcore.NewSpoutConn(input, output)
+	spoutConn := stormcore.NewSpoutConn(input, output, true)
 	spoutConn.Connect()
 
 	for i := 0; i < 6; i++ {
@@ -448,7 +448,7 @@ func TestSendSync(t *testing.T) {
 	outBuffer := bytes.NewBuffer(nil)
 	input := stormenc.NewJsonObjectInput(inBuffer)
 	output := stormenc.NewJsonObjectOutput(outBuffer)
-	spoutConn := stormcore.NewSpoutConn(input, output)
+	spoutConn := stormcore.NewSpoutConn(input, output, true)
 	spoutConn.Connect()
 
 	expectPid(outBuffer, t)

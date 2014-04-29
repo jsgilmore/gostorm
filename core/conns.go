@@ -158,6 +158,7 @@ func (this *boltConnImpl) SendFail(id string) {
 // The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...interface{}) (taskIds []int32) {
 	this.EmitDirect(anchors, stream, 0, contents...)
+	this.Flush()
 	if this.needTaskIds {
 		return this.ReadTaskIds()
 	} else {
@@ -177,9 +178,9 @@ func (this *boltConnImpl) EmitDirect(anchors []string, stream string, directTask
 }
 
 // NewSpoutConn returns a Storm spout connection that a Go spout can use to communicate with Storm
-func NewSpoutConn(in Input, out Output) SpoutConn {
+func NewSpoutConn(in Input, out Output, needTaskIds bool) SpoutConn {
 	spoutConn := &spoutConnImpl{
-		stormConnImpl: newStormConn(in, out, false),
+		stormConnImpl: newStormConn(in, out, needTaskIds),
 	}
 	return spoutConn
 }
@@ -224,7 +225,11 @@ func (this *spoutConnImpl) Emit(id string, stream string, contents ...interface{
 	this.EmitDirect(id, stream, 0, contents...)
 	// Flush this message now so that we can receive the taskIds before returning.
 	this.Flush()
-	return this.ReadTaskIds()
+	if this.needTaskIds {
+		return this.ReadTaskIds()
+	} else {
+		return nil
+	}
 }
 
 // EmitDirect emits a tuple with the given array of interface{}s as values,
