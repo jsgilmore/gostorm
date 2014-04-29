@@ -57,7 +57,6 @@ func verifyJsonOutput(t *testing.T, msg interface{}, expected []byte) {
 	if string(marshaled) != string(expected) {
 		t.Errorf("Unexpected output from marshaling message: %+v.\n Expected: %+v", string(marshaled), string(expected))
 	}
-
 }
 
 type testTupleItem struct {
