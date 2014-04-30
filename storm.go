@@ -38,11 +38,13 @@ type Spout interface {
 }
 
 type SpoutOutputCollector interface {
+	Log(msg string)
 	Emit(id string, stream string, fields ...interface{}) (taskIds []int32)
 	EmitDirect(id string, stream string, directTask int64, fields ...interface{})
 }
 
 type OutputCollector interface {
+	Log(msg string)
 	SendAck(id string)
 	SendFail(id string)
 	Emit(anchors []string, stream string, fields ...interface{}) (taskIds []int32)
