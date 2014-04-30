@@ -158,6 +158,7 @@ func (this *boltConnImpl) SendFail(id string) {
 // The function returns a list of taskIds to which the message was sent.
 func (this *boltConnImpl) Emit(anchors []string, stream string, contents ...interface{}) (taskIds []int32) {
 	this.EmitDirect(anchors, stream, 0, contents...)
+	this.Flush()
 	if this.needTaskIds {
 		return this.ReadTaskIds()
 	} else {
@@ -222,6 +223,8 @@ func (this *spoutConnImpl) SendSync() {
 // The function returns a list of taskIds to which the message was sent.
 func (this *spoutConnImpl) Emit(id string, stream string, contents ...interface{}) (taskIds []int32) {
 	this.EmitDirect(id, stream, 0, contents...)
+	// Flush this message now so that we can receive the taskIds before returning.
+	this.Flush()
 	if this.needTaskIds {
 		return this.ReadTaskIds()
 	} else {
