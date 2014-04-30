@@ -56,6 +56,9 @@ type mockOutputCollectorImpl struct {
 	bolt gostorm.Bolt
 }
 
+func (this *mockOutputCollectorImpl) Log(msg string) {
+}
+
 func (this *mockOutputCollectorImpl) SendAck(id string) {
 	this.EmitDirect(nil, "", 0, "Ack:"+id)
 }
@@ -86,6 +89,9 @@ func NewMockSpoutOutputCollector(bolt gostorm.Bolt) gostorm.SpoutOutputCollector
 
 type mockSpoutSpoutOutputCollectorImpl struct {
 	bolt gostorm.Bolt
+}
+
+func (this *mockSpoutSpoutOutputCollectorImpl) Log(msg string) {
 }
 
 func (this *mockSpoutSpoutOutputCollectorImpl) Emit(id string, stream string, contents ...interface{}) (taskIds []int32) {
