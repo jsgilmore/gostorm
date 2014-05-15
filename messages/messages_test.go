@@ -20,32 +20,17 @@ import (
 )
 
 func TestMarshalShellMsg(t *testing.T) {
-	id, stream, complexMsg := "id", "stream", "{\"hello\":\"there\"}"
-	task := int64(123)
-	needTaskIds := false
-	msg := &ShellMsg{
-		ShellMsgJson: &ShellMsgJson{
-			ShellMsgMeta: &ShellMsgMeta{
-				Command:     "foo",
-				Anchors:     []string{"anchor1, anchor2"},
-				Id:          &id,
-				Stream:      nil,
-				Task:        &task,
-				NeedTaskIds: &needTaskIds,
-				Msg:         &complexMsg,
-			},
-			Contents: []interface{}{},
-		},
-	}
+	msg := getMessage()
 
 	// Verifies that excluded fields (stream) aren't marshaled
 	expected := []byte(`{"anchors":["anchor1, anchor2"],"command":"foo","id":"id","msg":"{\"hello\":\"there\"}","task":123}`)
 	verifyJsonOutput(t, msg, expected)
 
 	// Verfies that complex tuples are json marshaled just once.
-	msg.ShellMsgJson.Stream = &stream
+	stream := "some_stream"
+	msg.ShellMsgJson.ShellMsgMeta.Stream = &stream
 	msg.ShellMsgJson.Contents = getTestTuple()
-	expected = []byte(`{"anchors":["anchor1, anchor2"],"command":"foo","id":"id","msg":"{\"hello\":\"there\"}","stream":"stream","task":123,"tuple":[{"Field1":"a","Field2":"b"},{"Field1":"c","Field2":"d"}]}`)
+	expected = []byte(`{"anchors":["anchor1, anchor2"],"command":"foo","id":"id","msg":"{\"hello\":\"there\"}","stream":"some_stream","task":123,"tuple":[{"Field1":"Lorem ipsum dolor sit amet, consectetur adipisicing elit","Field2":"sed do eiusmod tempor incididunt ut labore","Field3":12345},{"Field1":"sed quia consequuntur magni dolores eos qui","Field2":"ratione voluptatem sequi nesciunt. Neque porro quisquam","Field3":654321}]}`)
 	verifyJsonOutput(t, msg, expected)
 }
 
@@ -59,14 +44,57 @@ func verifyJsonOutput(t *testing.T, msg interface{}, expected []byte) {
 	}
 }
 
+func BenchmarkMarshalJSON(b *testing.B) {
+	msg := getMessage()
+	msg.ShellMsgJson.Contents = getTestTuple()
+	for i := 0; i < b.N; i++ {
+		_, err := json.Marshal(msg)
+		if err != nil {
+			b.Log("Error: ", err)
+			b.Failed()
+		}
+	}
+}
+
+// Test helpers and miscellaneous definitions.
+
+func getMessage() *ShellMsg {
+	id, complexMsg := "id", "{\"hello\":\"there\"}"
+	task := int64(123)
+	needTaskIds := false
+	return &ShellMsg{
+		ShellMsgJson: &ShellMsgJson{
+			ShellMsgMeta: &ShellMsgMeta{
+				Command:     "foo",
+				Anchors:     []string{"anchor1, anchor2"},
+				Id:          &id,
+				Stream:      nil,
+				Task:        &task,
+				NeedTaskIds: &needTaskIds,
+				Msg:         &complexMsg,
+			},
+			Contents: []interface{}{},
+		},
+	}
+}
+
 type testTupleItem struct {
 	Field1 string
 	Field2 string
+	Field3 int
 }
 
 func getTestTuple() []interface{} {
 	return []interface{}{
-		testTupleItem{"a", "b"},
-		testTupleItem{"c", "d"},
+		testTupleItem{
+			"Lorem ipsum dolor sit amet, consectetur adipisicing elit",
+			"sed do eiusmod tempor incididunt ut labore",
+			12345,
+		},
+		testTupleItem{
+			"sed quia consequuntur magni dolores eos qui",
+			"ratione voluptatem sequi nesciunt. Neque porro quisquam",
+			654321,
+		},
 	}
 }
