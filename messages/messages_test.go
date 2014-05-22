@@ -23,14 +23,14 @@ func TestMarshalShellMsg(t *testing.T) {
 	msg := getMessage()
 
 	// Verifies that excluded fields (stream) aren't marshaled
-	expected := []byte(`{"anchors":["anchor1, anchor2"],"command":"foo","id":"id","msg":"{\"hello\":\"there\"}","task":123}`)
+	expected := []byte(`{"anchors":["anchor1, anchor2"],"command":"emit","id":"id","msg":"{\"hello\":\"there\"}","need_task_ids":false,"task":123}`)
 	verifyJsonOutput(t, msg, expected)
 
 	// Verfies that complex tuples are json marshaled just once.
 	stream := "some_stream"
 	msg.ShellMsgJson.ShellMsgMeta.Stream = &stream
 	msg.ShellMsgJson.Contents = getTestTuple()
-	expected = []byte(`{"anchors":["anchor1, anchor2"],"command":"foo","id":"id","msg":"{\"hello\":\"there\"}","stream":"some_stream","task":123,"tuple":[{"Field1":"Lorem ipsum dolor sit amet, consectetur adipisicing elit","Field2":"sed do eiusmod tempor incididunt ut labore","Field3":12345},{"Field1":"sed quia consequuntur magni dolores eos qui","Field2":"ratione voluptatem sequi nesciunt. Neque porro quisquam","Field3":654321}]}`)
+	expected = []byte(`{"anchors":["anchor1, anchor2"],"command":"emit","id":"id","msg":"{\"hello\":\"there\"}","need_task_ids":false,"stream":"some_stream","task":123,"tuple":[{"Field1":"Lorem ipsum dolor sit amet, consectetur adipisicing elit","Field2":"sed do eiusmod tempor incididunt ut labore","Field3":12345},{"Field1":"sed quia consequuntur magni dolores eos qui","Field2":"ratione voluptatem sequi nesciunt. Neque porro quisquam","Field3":654321}]}`)
 	verifyJsonOutput(t, msg, expected)
 }
 
@@ -65,7 +65,7 @@ func getMessage() *ShellMsg {
 	return &ShellMsg{
 		ShellMsgJson: &ShellMsgJson{
 			ShellMsgMeta: &ShellMsgMeta{
-				Command:     "foo",
+				Command:     "emit",
 				Anchors:     []string{"anchor1, anchor2"},
 				Id:          &id,
 				Stream:      nil,

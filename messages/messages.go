@@ -197,8 +197,9 @@ type ShellMsg struct {
 }
 
 func (this *ShellMsg) MarshalJSON() ([]byte, error) {
+	command := this.ShellMsgJson.ShellMsgMeta.Command
 	result := map[string]interface{}{
-		"command": this.ShellMsgJson.ShellMsgMeta.Command,
+		"command": command,
 	}
 	if id := this.ShellMsgJson.ShellMsgMeta.GetId(); len(id) > 0 {
 		result["id"] = id
@@ -217,6 +218,9 @@ func (this *ShellMsg) MarshalJSON() ([]byte, error) {
 	}
 	if contents := this.ShellMsgJson.Contents; len(contents) > 0 {
 		result["tuple"] = contents
+	}
+	if command == "emit" && !this.ShellMsgJson.ShellMsgMeta.GetNeedTaskIds() {
+		result["need_task_ids"] = false
 	}
 	return json.Marshal(result)
 }
