@@ -12,7 +12,7 @@ Currently, the main purpose of GoStorm is to act as a library for Go spouts and 
 
 For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the [storm-starter](https://github.com/nathanmarz/storm-starter) WordCountTopology. GoStorm also contains mock output collector implementations that allows a developer to test her code code, before having to submit it as part of a Storm cluster.
 
-GoStorm implements (and enforces) the Storm [multilang protocol](https://github.com/nathanmarz/storm/wiki/Multilang-protocol). Apart from implementing the multilang JSON protocol that is used by Storm shell components, GoStorm also implements a protocol buffer binary encoding scheme for improved performance. The protocol buffer encoding requires the Storm [protoshell](https://github.com/jsgilmore/protoshell) multilang serialiser. Currently, [my customised version of Storm](https://github.com/jsgilmore/storm) is required to use the protocol buffer serialiser plugin. A pull request has been created for this improvement and my version of Storm always closely tracks the upstream Storm.
+GoStorm implements (and enforces) the Storm [multilang protocol](https://github.com/nathanmarz/storm/wiki/Multilang-protocol). Apart from implementing the multilang JSON protocol that is used by Storm shell components, GoStorm also implements a protocol buffer binary encoding scheme for improved performance. The protocol buffer encoding requires the Storm [protoshell](https://github.com/jsgilmore/protoshell) multilang serialiser and Storm 0.9.2 or later.
 
 ##Encoding
 GoStorm implements various encoding schemes with varying levels of performance:
