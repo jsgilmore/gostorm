@@ -43,8 +43,7 @@ func emitWords(sentance, id string, boltConn core.BoltConn) {
 
 func main() {
 	// Logging is done to an output file, since stdout and stderr are captured
-	fo, err := os.Create(fmt.Sprintf("/Users/johngilmore/output%d.txt", os.Getpid()))
-	//	fo, err := os.Create("/Users/johngilmore/output.txt")
+	fo, err := os.Create(fmt.Sprintf("output%d.txt", os.Getpid()))
 	if err != nil {
 		panic(err)
 	}
