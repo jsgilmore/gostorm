@@ -72,6 +72,12 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		if meta.GetStream() == "__heartbeat" {
+			boltConn.SendSync()
+			continue
+		}
+
 		emitWords(sentence, meta.Id, boltConn)
 		boltConn.SendAck(meta.Id)
 	}

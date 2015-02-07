@@ -31,6 +31,7 @@ type BoltConn interface {
 	ReadBoltMsg(meta *messages.BoltMsgMeta, contentStructs ...interface{}) (err error)
 	SendAck(id string)
 	SendFail(id string)
+	SendSync()
 	Emit(anchors []string, stream string, content ...interface{}) (taskIds []int32)
 	EmitDirect(anchors []string, stream string, directTask int64, contents ...interface{})
 }
@@ -150,6 +151,11 @@ func (this *boltConnImpl) SendAck(id string) {
 // No emission should be anchored to a failed message Id
 func (this *boltConnImpl) SendFail(id string) {
 	this.EmitGeneric("fail", id, "", "", nil, 0, false)
+}
+
+// SendSync sends a sync typically in response to a heartbeat
+func (this *boltConnImpl) SendSync() {
+	this.EmitGeneric("sync", "", "", "", nil, 0, false)
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,

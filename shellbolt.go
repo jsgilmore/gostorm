@@ -64,6 +64,12 @@ func (this *shellBoltImpl) Go() {
 		if this.cleaned {
 			panic("ShellBolt: Cleaned up bolt expected to execute")
 		}
+
+		if this.meta.GetStream() == "__heartbeat" {
+			this.boltConn.SendSync()
+			continue
+		}
+
 		this.bolt.Execute(*this.meta, fields...)
 		this.sent++
 	}
