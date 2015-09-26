@@ -24,29 +24,27 @@
 */
 package messages
 
-import proto "code.google.com/p/gogoprotobuf/proto"
+import proto "github.com/gogo/protobuf/proto"
+import fmt "fmt"
 import math "math"
 
-// discarding unused import gogoproto "code.google.com/p/gogoprotobuf/gogoproto/gogo.pb"
+// discarding unused import gogoproto "github.com/gogo/protobuf/gogoproto"
 
-import io "io"
-import fmt "fmt"
-import code_google_com_p_gogoprotobuf_proto "code.google.com/p/gogoprotobuf/proto"
+import bytes "bytes"
 
-import fmt1 "fmt"
 import strings "strings"
 import reflect "reflect"
 
-import fmt2 "fmt"
-import bytes "bytes"
+import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
 var _ = math.Inf
 
 type TaskComponentMapping struct {
-	Task             string `protobuf:"bytes,1,opt" json:"Task"`
-	Component        string `protobuf:"bytes,2,opt" json:"Component"`
+	Task             string `protobuf:"bytes,1,opt,name=Task" json:"Task"`
+	Component        string `protobuf:"bytes,2,opt,name=Component" json:"Component"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
@@ -68,8 +66,8 @@ func (m *TaskComponentMapping) GetComponent() string {
 }
 
 type Topology struct {
-	TaskId                int64                   `protobuf:"varint,1,opt" json:"TaskId"`
-	TaskComponentMappings []*TaskComponentMapping `protobuf:"bytes,2,rep" json:"TaskComponentMappings,omitempty"`
+	TaskId                int64                   `protobuf:"varint,1,opt,name=TaskId" json:"TaskId"`
+	TaskComponentMappings []*TaskComponentMapping `protobuf:"bytes,2,rep,name=TaskComponentMappings" json:"TaskComponentMappings,omitempty"`
 	XXX_unrecognized      []byte                  `json:"-"`
 }
 
@@ -91,8 +89,8 @@ func (m *Topology) GetTaskComponentMappings() []*TaskComponentMapping {
 }
 
 type Conf struct {
-	Key              string `protobuf:"bytes,1,opt" json:"Key"`
-	Value            string `protobuf:"bytes,2,opt" json:"Value"`
+	Key              string `protobuf:"bytes,1,opt,name=Key" json:"Key"`
+	Value            string `protobuf:"bytes,2,opt,name=Value" json:"Value"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
@@ -114,9 +112,9 @@ func (m *Conf) GetValue() string {
 }
 
 type Context struct {
-	PidDir           string    `protobuf:"bytes,1,opt" json:"PidDir"`
-	Topology         *Topology `protobuf:"bytes,2,opt" json:"Topology,omitempty"`
-	Confs            []*Conf   `protobuf:"bytes,3,rep" json:"Confs,omitempty"`
+	PidDir           string    `protobuf:"bytes,1,opt,name=PidDir" json:"PidDir"`
+	Topology         *Topology `protobuf:"bytes,2,opt,name=Topology" json:"Topology,omitempty"`
+	Confs            []*Conf   `protobuf:"bytes,3,rep,name=Confs" json:"Confs,omitempty"`
 	XXX_unrecognized []byte    `json:"-"`
 }
 
@@ -145,7 +143,7 @@ func (m *Context) GetConfs() []*Conf {
 }
 
 type Pid struct {
-	Pid              int32  `protobuf:"varint,1,opt" json:"Pid"`
+	Pid              int32  `protobuf:"varint,1,opt,name=Pid" json:"Pid"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
@@ -160,10 +158,10 @@ func (m *Pid) GetPid() int32 {
 }
 
 type BoltMsgMeta struct {
-	Id               string `protobuf:"bytes,1,opt" json:"Id"`
-	Comp             string `protobuf:"bytes,2,opt" json:"Comp"`
-	Stream           string `protobuf:"bytes,3,opt" json:"Stream"`
-	Task             int64  `protobuf:"varint,4,opt" json:"Task"`
+	Id               string `protobuf:"bytes,1,opt,name=Id" json:"Id"`
+	Comp             string `protobuf:"bytes,2,opt,name=Comp" json:"Comp"`
+	Stream           string `protobuf:"bytes,3,opt,name=Stream" json:"Stream"`
+	Task             int64  `protobuf:"varint,4,opt,name=Task" json:"Task"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
@@ -199,8 +197,8 @@ func (m *BoltMsgMeta) GetTask() int64 {
 }
 
 type BoltMsgProto struct {
-	BoltMsgMeta      *BoltMsgMeta `protobuf:"bytes,1,opt" json:"BoltMsgMeta,omitempty"`
-	Contents         [][]byte     `protobuf:"bytes,2,rep" json:"Contents,omitempty"`
+	BoltMsgMeta      *BoltMsgMeta `protobuf:"bytes,1,opt,name=BoltMsgMeta" json:"BoltMsgMeta,omitempty"`
+	Contents         [][]byte     `protobuf:"bytes,2,rep,name=Contents" json:"Contents,omitempty"`
 	XXX_unrecognized []byte       `json:"-"`
 }
 
@@ -222,7 +220,7 @@ func (m *BoltMsgProto) GetContents() [][]byte {
 }
 
 type TaskIds struct {
-	TaskIds          []int32 `protobuf:"varint,1,rep" json:"TaskIds,omitempty"`
+	TaskIds          []int32 `protobuf:"varint,1,rep,name=TaskIds" json:"TaskIds,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -237,8 +235,8 @@ func (m *TaskIds) GetTaskIds() []int32 {
 }
 
 type SpoutMsg struct {
-	Command          string `protobuf:"bytes,1,opt" json:"Command"`
-	Id               string `protobuf:"bytes,2,opt" json:"Id"`
+	Command          string `protobuf:"bytes,1,opt,name=Command" json:"Command"`
+	Id               string `protobuf:"bytes,2,opt,name=Id" json:"Id"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
@@ -260,13 +258,13 @@ func (m *SpoutMsg) GetId() string {
 }
 
 type ShellMsgMeta struct {
-	Command          string   `protobuf:"bytes,1,opt" json:"Command"`
-	Id               *string  `protobuf:"bytes,2,opt" json:"Id,omitempty"`
-	Anchors          []string `protobuf:"bytes,3,rep" json:"Anchors,omitempty"`
-	Stream           *string  `protobuf:"bytes,4,opt" json:"Stream,omitempty"`
-	Task             *int64   `protobuf:"varint,5,opt" json:"Task,omitempty"`
-	NeedTaskIds      *bool    `protobuf:"varint,6,opt" json:"NeedTaskIds,omitempty"`
-	Msg              *string  `protobuf:"bytes,7,opt" json:"Msg,omitempty"`
+	Command          string   `protobuf:"bytes,1,opt,name=Command" json:"Command"`
+	Id               *string  `protobuf:"bytes,2,opt,name=Id" json:"Id,omitempty"`
+	Anchors          []string `protobuf:"bytes,3,rep,name=Anchors" json:"Anchors,omitempty"`
+	Stream           *string  `protobuf:"bytes,4,opt,name=Stream" json:"Stream,omitempty"`
+	Task             *int64   `protobuf:"varint,5,opt,name=Task" json:"Task,omitempty"`
+	NeedTaskIds      *bool    `protobuf:"varint,6,opt,name=NeedTaskIds" json:"NeedTaskIds,omitempty"`
+	Msg              *string  `protobuf:"bytes,7,opt,name=Msg" json:"Msg,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
@@ -323,8 +321,8 @@ func (m *ShellMsgMeta) GetMsg() string {
 }
 
 type ShellMsgProto struct {
-	ShellMsgMeta     *ShellMsgMeta `protobuf:"bytes,1,opt" json:"ShellMsgMeta,omitempty"`
-	Contents         [][]byte      `protobuf:"bytes,2,rep" json:"Contents,omitempty"`
+	ShellMsgMeta     *ShellMsgMeta `protobuf:"bytes,1,opt,name=ShellMsgMeta" json:"ShellMsgMeta,omitempty"`
+	Contents         [][]byte      `protobuf:"bytes,2,rep,name=Contents" json:"Contents,omitempty"`
 	XXX_unrecognized []byte        `json:"-"`
 }
 
@@ -346,9 +344,9 @@ func (m *ShellMsgProto) GetContents() [][]byte {
 }
 
 type Test struct {
-	Name             string `protobuf:"bytes,1,opt" json:"Name"`
-	Number           int64  `protobuf:"varint,2,opt" json:"Number"`
-	Data             []byte `protobuf:"bytes,3,opt" json:"Data"`
+	Name             string `protobuf:"bytes,1,opt,name=Name" json:"Name"`
+	Number           int64  `protobuf:"varint,2,opt,name=Number" json:"Number"`
+	Data             []byte `protobuf:"bytes,3,opt,name=Data" json:"Data,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
@@ -376,2306 +374,34 @@ func (m *Test) GetData() []byte {
 	return nil
 }
 
-func init() {
-}
-func (m *TaskComponentMapping) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Task = string(data[index:postIndex])
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Component", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Component = string(data[index:postIndex])
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *Topology) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
-			}
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				m.TaskId |= (int64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TaskComponentMappings", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.TaskComponentMappings = append(m.TaskComponentMappings, &TaskComponentMapping{})
-			m.TaskComponentMappings[len(m.TaskComponentMappings)-1].Unmarshal(data[index:postIndex])
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *Conf) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Key = string(data[index:postIndex])
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Value = string(data[index:postIndex])
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *Context) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PidDir", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PidDir = string(data[index:postIndex])
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Topology", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Topology == nil {
-				m.Topology = &Topology{}
-			}
-			if err := m.Topology.Unmarshal(data[index:postIndex]); err != nil {
-				return err
-			}
-			index = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Confs", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Confs = append(m.Confs, &Conf{})
-			m.Confs[len(m.Confs)-1].Unmarshal(data[index:postIndex])
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *Pid) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pid", wireType)
-			}
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				m.Pid |= (int32(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *BoltMsgMeta) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Id = string(data[index:postIndex])
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Comp", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Comp = string(data[index:postIndex])
-			index = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Stream", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Stream = string(data[index:postIndex])
-			index = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
-			}
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				m.Task |= (int64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *BoltMsgProto) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BoltMsgMeta", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.BoltMsgMeta == nil {
-				m.BoltMsgMeta = &BoltMsgMeta{}
-			}
-			if err := m.BoltMsgMeta.Unmarshal(data[index:postIndex]); err != nil {
-				return err
-			}
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Contents", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				byteLen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + byteLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Contents = append(m.Contents, make([]byte, postIndex-index))
-			copy(m.Contents[len(m.Contents)-1], data[index:postIndex])
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *TaskIds) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TaskIds", wireType)
-			}
-			var v int32
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				v |= (int32(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.TaskIds = append(m.TaskIds, v)
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *SpoutMsg) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Command", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Command = string(data[index:postIndex])
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Id = string(data[index:postIndex])
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *ShellMsgMeta) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Command", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Command = string(data[index:postIndex])
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Id = &s
-			index = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Anchors", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Anchors = append(m.Anchors, string(data[index:postIndex]))
-			index = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Stream", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Stream = &s
-			index = postIndex
-		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
-			}
-			var v int64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				v |= (int64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Task = &v
-		case 6:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NeedTaskIds", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				v |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.NeedTaskIds = &b
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[index:postIndex])
-			m.Msg = &s
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *ShellMsgProto) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ShellMsgMeta", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.ShellMsgMeta == nil {
-				m.ShellMsgMeta = &ShellMsgMeta{}
-			}
-			if err := m.ShellMsgMeta.Unmarshal(data[index:postIndex]); err != nil {
-				return err
-			}
-			index = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Contents", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				byteLen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + byteLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Contents = append(m.Contents, make([]byte, postIndex-index))
-			copy(m.Contents[len(m.Contents)-1], data[index:postIndex])
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (m *Test) Unmarshal(data []byte) error {
-	l := len(data)
-	index := 0
-	for index < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if index >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[index]
-			index++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(data[index:postIndex])
-			index = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Number", wireType)
-			}
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				m.Number |= (int64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if index >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[index]
-				index++
-				byteLen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := index + byteLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Data = append(m.Data, data[index:postIndex]...)
-			index = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
-			if err != nil {
-				return err
-			}
-			if (index + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[index:index+skippy]...)
-			index += skippy
-		}
-	}
-	return nil
-}
-func (this *TaskComponentMapping) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&TaskComponentMapping{`,
-		`Task:` + fmt1.Sprintf("%v", this.Task) + `,`,
-		`Component:` + fmt1.Sprintf("%v", this.Component) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Topology) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Topology{`,
-		`TaskId:` + fmt1.Sprintf("%v", this.TaskId) + `,`,
-		`TaskComponentMappings:` + strings.Replace(fmt1.Sprintf("%v", this.TaskComponentMappings), "TaskComponentMapping", "TaskComponentMapping", 1) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Conf) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Conf{`,
-		`Key:` + fmt1.Sprintf("%v", this.Key) + `,`,
-		`Value:` + fmt1.Sprintf("%v", this.Value) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Context) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Context{`,
-		`PidDir:` + fmt1.Sprintf("%v", this.PidDir) + `,`,
-		`Topology:` + strings.Replace(fmt1.Sprintf("%v", this.Topology), "Topology", "Topology", 1) + `,`,
-		`Confs:` + strings.Replace(fmt1.Sprintf("%v", this.Confs), "Conf", "Conf", 1) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Pid) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Pid{`,
-		`Pid:` + fmt1.Sprintf("%v", this.Pid) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *BoltMsgMeta) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&BoltMsgMeta{`,
-		`Id:` + fmt1.Sprintf("%v", this.Id) + `,`,
-		`Comp:` + fmt1.Sprintf("%v", this.Comp) + `,`,
-		`Stream:` + fmt1.Sprintf("%v", this.Stream) + `,`,
-		`Task:` + fmt1.Sprintf("%v", this.Task) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *BoltMsgProto) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&BoltMsgProto{`,
-		`BoltMsgMeta:` + strings.Replace(fmt1.Sprintf("%v", this.BoltMsgMeta), "BoltMsgMeta", "BoltMsgMeta", 1) + `,`,
-		`Contents:` + fmt1.Sprintf("%v", this.Contents) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *TaskIds) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&TaskIds{`,
-		`TaskIds:` + fmt1.Sprintf("%v", this.TaskIds) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *SpoutMsg) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&SpoutMsg{`,
-		`Command:` + fmt1.Sprintf("%v", this.Command) + `,`,
-		`Id:` + fmt1.Sprintf("%v", this.Id) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ShellMsgMeta) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ShellMsgMeta{`,
-		`Command:` + fmt1.Sprintf("%v", this.Command) + `,`,
-		`Id:` + valueToStringMessages(this.Id) + `,`,
-		`Anchors:` + fmt1.Sprintf("%v", this.Anchors) + `,`,
-		`Stream:` + valueToStringMessages(this.Stream) + `,`,
-		`Task:` + valueToStringMessages(this.Task) + `,`,
-		`NeedTaskIds:` + valueToStringMessages(this.NeedTaskIds) + `,`,
-		`Msg:` + valueToStringMessages(this.Msg) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ShellMsgProto) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ShellMsgProto{`,
-		`ShellMsgMeta:` + strings.Replace(fmt1.Sprintf("%v", this.ShellMsgMeta), "ShellMsgMeta", "ShellMsgMeta", 1) + `,`,
-		`Contents:` + fmt1.Sprintf("%v", this.Contents) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Test) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Test{`,
-		`Name:` + fmt1.Sprintf("%v", this.Name) + `,`,
-		`Number:` + fmt1.Sprintf("%v", this.Number) + `,`,
-		`Data:` + fmt1.Sprintf("%v", this.Data) + `,`,
-		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func valueToStringMessages(v interface{}) string {
-	rv := reflect.ValueOf(v)
-	if rv.IsNil() {
-		return "nil"
-	}
-	pv := reflect.Indirect(rv).Interface()
-	return fmt1.Sprintf("*%v", pv)
-}
-func (m *TaskComponentMapping) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Task)
-	n += 1 + l + sovMessages(uint64(l))
-	l = len(m.Component)
-	n += 1 + l + sovMessages(uint64(l))
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *Topology) Size() (n int) {
-	var l int
-	_ = l
-	n += 1 + sovMessages(uint64(m.TaskId))
-	if len(m.TaskComponentMappings) > 0 {
-		for _, e := range m.TaskComponentMappings {
-			l = e.Size()
-			n += 1 + l + sovMessages(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *Conf) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Key)
-	n += 1 + l + sovMessages(uint64(l))
-	l = len(m.Value)
-	n += 1 + l + sovMessages(uint64(l))
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *Context) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.PidDir)
-	n += 1 + l + sovMessages(uint64(l))
-	if m.Topology != nil {
-		l = m.Topology.Size()
-		n += 1 + l + sovMessages(uint64(l))
-	}
-	if len(m.Confs) > 0 {
-		for _, e := range m.Confs {
-			l = e.Size()
-			n += 1 + l + sovMessages(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *Pid) Size() (n int) {
-	var l int
-	_ = l
-	n += 1 + sovMessages(uint64(uint32(m.Pid)))
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *BoltMsgMeta) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Id)
-	n += 1 + l + sovMessages(uint64(l))
-	l = len(m.Comp)
-	n += 1 + l + sovMessages(uint64(l))
-	l = len(m.Stream)
-	n += 1 + l + sovMessages(uint64(l))
-	n += 1 + sovMessages(uint64(m.Task))
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *BoltMsgProto) Size() (n int) {
-	var l int
-	_ = l
-	if m.BoltMsgMeta != nil {
-		l = m.BoltMsgMeta.Size()
-		n += 1 + l + sovMessages(uint64(l))
-	}
-	if len(m.Contents) > 0 {
-		for _, b := range m.Contents {
-			l = len(b)
-			n += 1 + l + sovMessages(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *TaskIds) Size() (n int) {
-	var l int
-	_ = l
-	if len(m.TaskIds) > 0 {
-		for _, e := range m.TaskIds {
-			n += 1 + sovMessages(uint64(uint32(e)))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *SpoutMsg) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Command)
-	n += 1 + l + sovMessages(uint64(l))
-	l = len(m.Id)
-	n += 1 + l + sovMessages(uint64(l))
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *ShellMsgMeta) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Command)
-	n += 1 + l + sovMessages(uint64(l))
-	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMessages(uint64(l))
-	}
-	if len(m.Anchors) > 0 {
-		for _, s := range m.Anchors {
-			l = len(s)
-			n += 1 + l + sovMessages(uint64(l))
-		}
-	}
-	if m.Stream != nil {
-		l = len(*m.Stream)
-		n += 1 + l + sovMessages(uint64(l))
-	}
-	if m.Task != nil {
-		n += 1 + sovMessages(uint64(*m.Task))
-	}
-	if m.NeedTaskIds != nil {
-		n += 2
-	}
-	if m.Msg != nil {
-		l = len(*m.Msg)
-		n += 1 + l + sovMessages(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *ShellMsgProto) Size() (n int) {
-	var l int
-	_ = l
-	if m.ShellMsgMeta != nil {
-		l = m.ShellMsgMeta.Size()
-		n += 1 + l + sovMessages(uint64(l))
-	}
-	if len(m.Contents) > 0 {
-		for _, b := range m.Contents {
-			l = len(b)
-			n += 1 + l + sovMessages(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-func (m *Test) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Name)
-	n += 1 + l + sovMessages(uint64(l))
-	n += 1 + sovMessages(uint64(m.Number))
-	l = len(m.Data)
-	n += 1 + l + sovMessages(uint64(l))
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func sovMessages(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
-}
-func sozMessages(x uint64) (n int) {
-	return sovMessages(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func NewPopulatedTaskComponentMapping(r randyMessages, easy bool) *TaskComponentMapping {
-	this := &TaskComponentMapping{}
-	this.Task = randStringMessages(r)
-	this.Component = randStringMessages(r)
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedTopology(r randyMessages, easy bool) *Topology {
-	this := &Topology{}
-	this.TaskId = r.Int63()
-	if r.Intn(2) == 0 {
-		this.TaskId *= -1
-	}
-	if r.Intn(10) != 0 {
-		v1 := r.Intn(10)
-		this.TaskComponentMappings = make([]*TaskComponentMapping, v1)
-		for i := 0; i < v1; i++ {
-			this.TaskComponentMappings[i] = NewPopulatedTaskComponentMapping(r, easy)
-		}
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedConf(r randyMessages, easy bool) *Conf {
-	this := &Conf{}
-	this.Key = randStringMessages(r)
-	this.Value = randStringMessages(r)
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedContext(r randyMessages, easy bool) *Context {
-	this := &Context{}
-	this.PidDir = randStringMessages(r)
-	if r.Intn(10) != 0 {
-		this.Topology = NewPopulatedTopology(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		v2 := r.Intn(10)
-		this.Confs = make([]*Conf, v2)
-		for i := 0; i < v2; i++ {
-			this.Confs[i] = NewPopulatedConf(r, easy)
-		}
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 4)
-	}
-	return this
-}
-
-func NewPopulatedPid(r randyMessages, easy bool) *Pid {
-	this := &Pid{}
-	this.Pid = r.Int31()
-	if r.Intn(2) == 0 {
-		this.Pid *= -1
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 2)
-	}
-	return this
-}
-
-func NewPopulatedBoltMsgMeta(r randyMessages, easy bool) *BoltMsgMeta {
-	this := &BoltMsgMeta{}
-	this.Id = randStringMessages(r)
-	this.Comp = randStringMessages(r)
-	this.Stream = randStringMessages(r)
-	this.Task = r.Int63()
-	if r.Intn(2) == 0 {
-		this.Task *= -1
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 5)
-	}
-	return this
-}
-
-func NewPopulatedBoltMsgProto(r randyMessages, easy bool) *BoltMsgProto {
-	this := &BoltMsgProto{}
-	if r.Intn(10) != 0 {
-		this.BoltMsgMeta = NewPopulatedBoltMsgMeta(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		v3 := r.Intn(100)
-		this.Contents = make([][]byte, v3)
-		for i := 0; i < v3; i++ {
-			v4 := r.Intn(100)
-			this.Contents[i] = make([]byte, v4)
-			for j := 0; j < v4; j++ {
-				this.Contents[i][j] = byte(r.Intn(256))
-			}
-		}
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedTaskIds(r randyMessages, easy bool) *TaskIds {
-	this := &TaskIds{}
-	if r.Intn(10) != 0 {
-		v5 := r.Intn(100)
-		this.TaskIds = make([]int32, v5)
-		for i := 0; i < v5; i++ {
-			this.TaskIds[i] = r.Int31()
-			if r.Intn(2) == 0 {
-				this.TaskIds[i] *= -1
-			}
-		}
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 2)
-	}
-	return this
-}
-
-func NewPopulatedSpoutMsg(r randyMessages, easy bool) *SpoutMsg {
-	this := &SpoutMsg{}
-	this.Command = randStringMessages(r)
-	this.Id = randStringMessages(r)
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedShellMsgMeta(r randyMessages, easy bool) *ShellMsgMeta {
-	this := &ShellMsgMeta{}
-	this.Command = randStringMessages(r)
-	if r.Intn(10) != 0 {
-		v6 := randStringMessages(r)
-		this.Id = &v6
-	}
-	if r.Intn(10) != 0 {
-		v7 := r.Intn(10)
-		this.Anchors = make([]string, v7)
-		for i := 0; i < v7; i++ {
-			this.Anchors[i] = randStringMessages(r)
-		}
-	}
-	if r.Intn(10) != 0 {
-		v8 := randStringMessages(r)
-		this.Stream = &v8
-	}
-	if r.Intn(10) != 0 {
-		v9 := r.Int63()
-		if r.Intn(2) == 0 {
-			v9 *= -1
-		}
-		this.Task = &v9
-	}
-	if r.Intn(10) != 0 {
-		v10 := bool(r.Intn(2) == 0)
-		this.NeedTaskIds = &v10
-	}
-	if r.Intn(10) != 0 {
-		v11 := randStringMessages(r)
-		this.Msg = &v11
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 8)
-	}
-	return this
-}
-
-func NewPopulatedShellMsgProto(r randyMessages, easy bool) *ShellMsgProto {
-	this := &ShellMsgProto{}
-	if r.Intn(10) != 0 {
-		this.ShellMsgMeta = NewPopulatedShellMsgMeta(r, easy)
-	}
-	if r.Intn(10) != 0 {
-		v12 := r.Intn(100)
-		this.Contents = make([][]byte, v12)
-		for i := 0; i < v12; i++ {
-			v13 := r.Intn(100)
-			this.Contents[i] = make([]byte, v13)
-			for j := 0; j < v13; j++ {
-				this.Contents[i][j] = byte(r.Intn(256))
-			}
-		}
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedTest(r randyMessages, easy bool) *Test {
-	this := &Test{}
-	this.Name = randStringMessages(r)
-	this.Number = r.Int63()
-	if r.Intn(2) == 0 {
-		this.Number *= -1
-	}
-	v14 := r.Intn(100)
-	this.Data = make([]byte, v14)
-	for i := 0; i < v14; i++ {
-		this.Data[i] = byte(r.Intn(256))
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 4)
-	}
-	return this
-}
-
-type randyMessages interface {
-	Float32() float32
-	Float64() float64
-	Int63() int64
-	Int31() int32
-	Uint32() uint32
-	Intn(n int) int
-}
-
-func randUTF8RuneMessages(r randyMessages) rune {
-	res := rune(r.Uint32() % 1112064)
-	if 55296 <= res {
-		res += 2047
-	}
-	return res
-}
-func randStringMessages(r randyMessages) string {
-	v15 := r.Intn(100)
-	tmps := make([]rune, v15)
-	for i := 0; i < v15; i++ {
-		tmps[i] = randUTF8RuneMessages(r)
-	}
-	return string(tmps)
-}
-func randUnrecognizedMessages(r randyMessages, maxFieldNumber int) (data []byte) {
-	l := r.Intn(5)
-	for i := 0; i < l; i++ {
-		wire := r.Intn(4)
-		if wire == 3 {
-			wire = 5
-		}
-		fieldNumber := maxFieldNumber + r.Intn(100)
-		data = randFieldMessages(data, r, fieldNumber, wire)
-	}
-	return data
-}
-func randFieldMessages(data []byte, r randyMessages, fieldNumber int, wire int) []byte {
-	key := uint32(fieldNumber)<<3 | uint32(wire)
-	switch wire {
-	case 0:
-		data = encodeVarintPopulateMessages(data, uint64(key))
-		v16 := r.Int63()
-		if r.Intn(2) == 0 {
-			v16 *= -1
-		}
-		data = encodeVarintPopulateMessages(data, uint64(v16))
-	case 1:
-		data = encodeVarintPopulateMessages(data, uint64(key))
-		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
-	case 2:
-		data = encodeVarintPopulateMessages(data, uint64(key))
-		ll := r.Intn(100)
-		data = encodeVarintPopulateMessages(data, uint64(ll))
-		for j := 0; j < ll; j++ {
-			data = append(data, byte(r.Intn(256)))
-		}
-	default:
-		data = encodeVarintPopulateMessages(data, uint64(key))
-		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
-	}
-	return data
-}
-func encodeVarintPopulateMessages(data []byte, v uint64) []byte {
-	for v >= 1<<7 {
-		data = append(data, uint8(uint64(v)&0x7f|0x80))
-		v >>= 7
-	}
-	data = append(data, uint8(v))
-	return data
-}
-func (m *TaskComponentMapping) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *TaskComponentMapping) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Task)))
-	i += copy(data[i:], m.Task)
-	data[i] = 0x12
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Component)))
-	i += copy(data[i:], m.Component)
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *Topology) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Topology) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0x8
-	i++
-	i = encodeVarintMessages(data, i, uint64(m.TaskId))
-	if len(m.TaskComponentMappings) > 0 {
-		for _, msg := range m.TaskComponentMappings {
-			data[i] = 0x12
-			i++
-			i = encodeVarintMessages(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *Conf) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Conf) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Key)))
-	i += copy(data[i:], m.Key)
-	data[i] = 0x12
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Value)))
-	i += copy(data[i:], m.Value)
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *Context) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Context) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.PidDir)))
-	i += copy(data[i:], m.PidDir)
-	if m.Topology != nil {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMessages(data, i, uint64(m.Topology.Size()))
-		n1, err := m.Topology.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
-	}
-	if len(m.Confs) > 0 {
-		for _, msg := range m.Confs {
-			data[i] = 0x1a
-			i++
-			i = encodeVarintMessages(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *Pid) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Pid) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0x8
-	i++
-	i = encodeVarintMessages(data, i, uint64(uint32(m.Pid)))
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *BoltMsgMeta) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *BoltMsgMeta) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Id)))
-	i += copy(data[i:], m.Id)
-	data[i] = 0x12
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Comp)))
-	i += copy(data[i:], m.Comp)
-	data[i] = 0x1a
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Stream)))
-	i += copy(data[i:], m.Stream)
-	data[i] = 0x20
-	i++
-	i = encodeVarintMessages(data, i, uint64(m.Task))
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *BoltMsgProto) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *BoltMsgProto) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.BoltMsgMeta != nil {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMessages(data, i, uint64(m.BoltMsgMeta.Size()))
-		n2, err := m.BoltMsgMeta.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n2
-	}
-	if len(m.Contents) > 0 {
-		for _, b := range m.Contents {
-			data[i] = 0x12
-			i++
-			i = encodeVarintMessages(data, i, uint64(len(b)))
-			i += copy(data[i:], b)
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *TaskIds) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *TaskIds) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.TaskIds) > 0 {
-		for _, num := range m.TaskIds {
-			data[i] = 0x8
-			i++
-			i = encodeVarintMessages(data, i, uint64(uint32(num)))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *SpoutMsg) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *SpoutMsg) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Command)))
-	i += copy(data[i:], m.Command)
-	data[i] = 0x12
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Id)))
-	i += copy(data[i:], m.Id)
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *ShellMsgMeta) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ShellMsgMeta) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Command)))
-	i += copy(data[i:], m.Command)
-	if m.Id != nil {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMessages(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
-	}
-	if len(m.Anchors) > 0 {
-		for _, s := range m.Anchors {
-			data[i] = 0x1a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				data[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			data[i] = uint8(l)
-			i++
-			i += copy(data[i:], s)
-		}
-	}
-	if m.Stream != nil {
-		data[i] = 0x22
-		i++
-		i = encodeVarintMessages(data, i, uint64(len(*m.Stream)))
-		i += copy(data[i:], *m.Stream)
-	}
-	if m.Task != nil {
-		data[i] = 0x28
-		i++
-		i = encodeVarintMessages(data, i, uint64(*m.Task))
-	}
-	if m.NeedTaskIds != nil {
-		data[i] = 0x30
-		i++
-		if *m.NeedTaskIds {
-			data[i] = 1
-		} else {
-			data[i] = 0
-		}
-		i++
-	}
-	if m.Msg != nil {
-		data[i] = 0x3a
-		i++
-		i = encodeVarintMessages(data, i, uint64(len(*m.Msg)))
-		i += copy(data[i:], *m.Msg)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *ShellMsgProto) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ShellMsgProto) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.ShellMsgMeta != nil {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMessages(data, i, uint64(m.ShellMsgMeta.Size()))
-		n3, err := m.ShellMsgMeta.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n3
-	}
-	if len(m.Contents) > 0 {
-		for _, b := range m.Contents {
-			data[i] = 0x12
-			i++
-			i = encodeVarintMessages(data, i, uint64(len(b)))
-			i += copy(data[i:], b)
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func (m *Test) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *Test) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Name)))
-	i += copy(data[i:], m.Name)
-	data[i] = 0x10
-	i++
-	i = encodeVarintMessages(data, i, uint64(m.Number))
-	data[i] = 0x1a
-	i++
-	i = encodeVarintMessages(data, i, uint64(len(m.Data)))
-	i += copy(data[i:], m.Data)
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-func encodeFixed64Messages(data []byte, offset int, v uint64) int {
-	data[offset] = uint8(v)
-	data[offset+1] = uint8(v >> 8)
-	data[offset+2] = uint8(v >> 16)
-	data[offset+3] = uint8(v >> 24)
-	data[offset+4] = uint8(v >> 32)
-	data[offset+5] = uint8(v >> 40)
-	data[offset+6] = uint8(v >> 48)
-	data[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Messages(data []byte, offset int, v uint32) int {
-	data[offset] = uint8(v)
-	data[offset+1] = uint8(v >> 8)
-	data[offset+2] = uint8(v >> 16)
-	data[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
-func encodeVarintMessages(data []byte, offset int, v uint64) int {
-	for v >= 1<<7 {
-		data[offset] = uint8(v&0x7f | 0x80)
-		v >>= 7
-		offset++
-	}
-	data[offset] = uint8(v)
-	return offset + 1
-}
 func (this *TaskComponentMapping) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*TaskComponentMapping)
 	if !ok {
-		return fmt2.Errorf("that is not of type *TaskComponentMapping")
+		return fmt.Errorf("that is not of type *TaskComponentMapping")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *TaskComponentMapping but is nil && this != nil")
+		return fmt.Errorf("that is type *TaskComponentMapping but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *TaskComponentMappingbut is not nil && this == nil")
+		return fmt.Errorf("that is type *TaskComponentMappingbut is not nil && this == nil")
 	}
 	if this.Task != that1.Task {
-		return fmt2.Errorf("Task this(%v) Not Equal that(%v)", this.Task, that1.Task)
+		return fmt.Errorf("Task this(%v) Not Equal that(%v)", this.Task, that1.Task)
 	}
 	if this.Component != that1.Component {
-		return fmt2.Errorf("Component this(%v) Not Equal that(%v)", this.Component, that1.Component)
+		return fmt.Errorf("Component this(%v) Not Equal that(%v)", this.Component, that1.Component)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -2715,34 +441,34 @@ func (this *Topology) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Topology)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Topology")
+		return fmt.Errorf("that is not of type *Topology")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Topology but is nil && this != nil")
+		return fmt.Errorf("that is type *Topology but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Topologybut is not nil && this == nil")
+		return fmt.Errorf("that is type *Topologybut is not nil && this == nil")
 	}
 	if this.TaskId != that1.TaskId {
-		return fmt2.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
+		return fmt.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
 	}
 	if len(this.TaskComponentMappings) != len(that1.TaskComponentMappings) {
-		return fmt2.Errorf("TaskComponentMappings this(%v) Not Equal that(%v)", len(this.TaskComponentMappings), len(that1.TaskComponentMappings))
+		return fmt.Errorf("TaskComponentMappings this(%v) Not Equal that(%v)", len(this.TaskComponentMappings), len(that1.TaskComponentMappings))
 	}
 	for i := range this.TaskComponentMappings {
 		if !this.TaskComponentMappings[i].Equal(that1.TaskComponentMappings[i]) {
-			return fmt2.Errorf("TaskComponentMappings this[%v](%v) Not Equal that[%v](%v)", i, this.TaskComponentMappings[i], i, that1.TaskComponentMappings[i])
+			return fmt.Errorf("TaskComponentMappings this[%v](%v) Not Equal that[%v](%v)", i, this.TaskComponentMappings[i], i, that1.TaskComponentMappings[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -2787,29 +513,29 @@ func (this *Conf) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Conf)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Conf")
+		return fmt.Errorf("that is not of type *Conf")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Conf but is nil && this != nil")
+		return fmt.Errorf("that is type *Conf but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Confbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Confbut is not nil && this == nil")
 	}
 	if this.Key != that1.Key {
-		return fmt2.Errorf("Key this(%v) Not Equal that(%v)", this.Key, that1.Key)
+		return fmt.Errorf("Key this(%v) Not Equal that(%v)", this.Key, that1.Key)
 	}
 	if this.Value != that1.Value {
-		return fmt2.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -2849,37 +575,37 @@ func (this *Context) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Context)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Context")
+		return fmt.Errorf("that is not of type *Context")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Context but is nil && this != nil")
+		return fmt.Errorf("that is type *Context but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Contextbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Contextbut is not nil && this == nil")
 	}
 	if this.PidDir != that1.PidDir {
-		return fmt2.Errorf("PidDir this(%v) Not Equal that(%v)", this.PidDir, that1.PidDir)
+		return fmt.Errorf("PidDir this(%v) Not Equal that(%v)", this.PidDir, that1.PidDir)
 	}
 	if !this.Topology.Equal(that1.Topology) {
-		return fmt2.Errorf("Topology this(%v) Not Equal that(%v)", this.Topology, that1.Topology)
+		return fmt.Errorf("Topology this(%v) Not Equal that(%v)", this.Topology, that1.Topology)
 	}
 	if len(this.Confs) != len(that1.Confs) {
-		return fmt2.Errorf("Confs this(%v) Not Equal that(%v)", len(this.Confs), len(that1.Confs))
+		return fmt.Errorf("Confs this(%v) Not Equal that(%v)", len(this.Confs), len(that1.Confs))
 	}
 	for i := range this.Confs {
 		if !this.Confs[i].Equal(that1.Confs[i]) {
-			return fmt2.Errorf("Confs this[%v](%v) Not Equal that[%v](%v)", i, this.Confs[i], i, that1.Confs[i])
+			return fmt.Errorf("Confs this[%v](%v) Not Equal that[%v](%v)", i, this.Confs[i], i, that1.Confs[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -2927,26 +653,26 @@ func (this *Pid) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Pid)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Pid")
+		return fmt.Errorf("that is not of type *Pid")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Pid but is nil && this != nil")
+		return fmt.Errorf("that is type *Pid but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Pidbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Pidbut is not nil && this == nil")
 	}
 	if this.Pid != that1.Pid {
-		return fmt2.Errorf("Pid this(%v) Not Equal that(%v)", this.Pid, that1.Pid)
+		return fmt.Errorf("Pid this(%v) Not Equal that(%v)", this.Pid, that1.Pid)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -2983,35 +709,35 @@ func (this *BoltMsgMeta) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*BoltMsgMeta)
 	if !ok {
-		return fmt2.Errorf("that is not of type *BoltMsgMeta")
+		return fmt.Errorf("that is not of type *BoltMsgMeta")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *BoltMsgMeta but is nil && this != nil")
+		return fmt.Errorf("that is type *BoltMsgMeta but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *BoltMsgMetabut is not nil && this == nil")
+		return fmt.Errorf("that is type *BoltMsgMetabut is not nil && this == nil")
 	}
 	if this.Id != that1.Id {
-		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
 	if this.Comp != that1.Comp {
-		return fmt2.Errorf("Comp this(%v) Not Equal that(%v)", this.Comp, that1.Comp)
+		return fmt.Errorf("Comp this(%v) Not Equal that(%v)", this.Comp, that1.Comp)
 	}
 	if this.Stream != that1.Stream {
-		return fmt2.Errorf("Stream this(%v) Not Equal that(%v)", this.Stream, that1.Stream)
+		return fmt.Errorf("Stream this(%v) Not Equal that(%v)", this.Stream, that1.Stream)
 	}
 	if this.Task != that1.Task {
-		return fmt2.Errorf("Task this(%v) Not Equal that(%v)", this.Task, that1.Task)
+		return fmt.Errorf("Task this(%v) Not Equal that(%v)", this.Task, that1.Task)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3057,34 +783,34 @@ func (this *BoltMsgProto) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*BoltMsgProto)
 	if !ok {
-		return fmt2.Errorf("that is not of type *BoltMsgProto")
+		return fmt.Errorf("that is not of type *BoltMsgProto")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *BoltMsgProto but is nil && this != nil")
+		return fmt.Errorf("that is type *BoltMsgProto but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *BoltMsgProtobut is not nil && this == nil")
+		return fmt.Errorf("that is type *BoltMsgProtobut is not nil && this == nil")
 	}
 	if !this.BoltMsgMeta.Equal(that1.BoltMsgMeta) {
-		return fmt2.Errorf("BoltMsgMeta this(%v) Not Equal that(%v)", this.BoltMsgMeta, that1.BoltMsgMeta)
+		return fmt.Errorf("BoltMsgMeta this(%v) Not Equal that(%v)", this.BoltMsgMeta, that1.BoltMsgMeta)
 	}
 	if len(this.Contents) != len(that1.Contents) {
-		return fmt2.Errorf("Contents this(%v) Not Equal that(%v)", len(this.Contents), len(that1.Contents))
+		return fmt.Errorf("Contents this(%v) Not Equal that(%v)", len(this.Contents), len(that1.Contents))
 	}
 	for i := range this.Contents {
 		if !bytes.Equal(this.Contents[i], that1.Contents[i]) {
-			return fmt2.Errorf("Contents this[%v](%v) Not Equal that[%v](%v)", i, this.Contents[i], i, that1.Contents[i])
+			return fmt.Errorf("Contents this[%v](%v) Not Equal that[%v](%v)", i, this.Contents[i], i, that1.Contents[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3129,31 +855,31 @@ func (this *TaskIds) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*TaskIds)
 	if !ok {
-		return fmt2.Errorf("that is not of type *TaskIds")
+		return fmt.Errorf("that is not of type *TaskIds")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *TaskIds but is nil && this != nil")
+		return fmt.Errorf("that is type *TaskIds but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *TaskIdsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *TaskIdsbut is not nil && this == nil")
 	}
 	if len(this.TaskIds) != len(that1.TaskIds) {
-		return fmt2.Errorf("TaskIds this(%v) Not Equal that(%v)", len(this.TaskIds), len(that1.TaskIds))
+		return fmt.Errorf("TaskIds this(%v) Not Equal that(%v)", len(this.TaskIds), len(that1.TaskIds))
 	}
 	for i := range this.TaskIds {
 		if this.TaskIds[i] != that1.TaskIds[i] {
-			return fmt2.Errorf("TaskIds this[%v](%v) Not Equal that[%v](%v)", i, this.TaskIds[i], i, that1.TaskIds[i])
+			return fmt.Errorf("TaskIds this[%v](%v) Not Equal that[%v](%v)", i, this.TaskIds[i], i, that1.TaskIds[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3195,29 +921,29 @@ func (this *SpoutMsg) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*SpoutMsg)
 	if !ok {
-		return fmt2.Errorf("that is not of type *SpoutMsg")
+		return fmt.Errorf("that is not of type *SpoutMsg")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *SpoutMsg but is nil && this != nil")
+		return fmt.Errorf("that is type *SpoutMsg but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *SpoutMsgbut is not nil && this == nil")
+		return fmt.Errorf("that is type *SpoutMsgbut is not nil && this == nil")
 	}
 	if this.Command != that1.Command {
-		return fmt2.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
+		return fmt.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
 	}
 	if this.Id != that1.Id {
-		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3257,79 +983,79 @@ func (this *ShellMsgMeta) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ShellMsgMeta)
 	if !ok {
-		return fmt2.Errorf("that is not of type *ShellMsgMeta")
+		return fmt.Errorf("that is not of type *ShellMsgMeta")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *ShellMsgMeta but is nil && this != nil")
+		return fmt.Errorf("that is type *ShellMsgMeta but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *ShellMsgMetabut is not nil && this == nil")
+		return fmt.Errorf("that is type *ShellMsgMetabut is not nil && this == nil")
 	}
 	if this.Command != that1.Command {
-		return fmt2.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
+		return fmt.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
 	}
 	if this.Id != nil && that1.Id != nil {
 		if *this.Id != *that1.Id {
-			return fmt2.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
+			return fmt.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
 		}
 	} else if this.Id != nil {
-		return fmt2.Errorf("this.Id == nil && that.Id != nil")
+		return fmt.Errorf("this.Id == nil && that.Id != nil")
 	} else if that1.Id != nil {
-		return fmt2.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
 	if len(this.Anchors) != len(that1.Anchors) {
-		return fmt2.Errorf("Anchors this(%v) Not Equal that(%v)", len(this.Anchors), len(that1.Anchors))
+		return fmt.Errorf("Anchors this(%v) Not Equal that(%v)", len(this.Anchors), len(that1.Anchors))
 	}
 	for i := range this.Anchors {
 		if this.Anchors[i] != that1.Anchors[i] {
-			return fmt2.Errorf("Anchors this[%v](%v) Not Equal that[%v](%v)", i, this.Anchors[i], i, that1.Anchors[i])
+			return fmt.Errorf("Anchors this[%v](%v) Not Equal that[%v](%v)", i, this.Anchors[i], i, that1.Anchors[i])
 		}
 	}
 	if this.Stream != nil && that1.Stream != nil {
 		if *this.Stream != *that1.Stream {
-			return fmt2.Errorf("Stream this(%v) Not Equal that(%v)", *this.Stream, *that1.Stream)
+			return fmt.Errorf("Stream this(%v) Not Equal that(%v)", *this.Stream, *that1.Stream)
 		}
 	} else if this.Stream != nil {
-		return fmt2.Errorf("this.Stream == nil && that.Stream != nil")
+		return fmt.Errorf("this.Stream == nil && that.Stream != nil")
 	} else if that1.Stream != nil {
-		return fmt2.Errorf("Stream this(%v) Not Equal that(%v)", this.Stream, that1.Stream)
+		return fmt.Errorf("Stream this(%v) Not Equal that(%v)", this.Stream, that1.Stream)
 	}
 	if this.Task != nil && that1.Task != nil {
 		if *this.Task != *that1.Task {
-			return fmt2.Errorf("Task this(%v) Not Equal that(%v)", *this.Task, *that1.Task)
+			return fmt.Errorf("Task this(%v) Not Equal that(%v)", *this.Task, *that1.Task)
 		}
 	} else if this.Task != nil {
-		return fmt2.Errorf("this.Task == nil && that.Task != nil")
+		return fmt.Errorf("this.Task == nil && that.Task != nil")
 	} else if that1.Task != nil {
-		return fmt2.Errorf("Task this(%v) Not Equal that(%v)", this.Task, that1.Task)
+		return fmt.Errorf("Task this(%v) Not Equal that(%v)", this.Task, that1.Task)
 	}
 	if this.NeedTaskIds != nil && that1.NeedTaskIds != nil {
 		if *this.NeedTaskIds != *that1.NeedTaskIds {
-			return fmt2.Errorf("NeedTaskIds this(%v) Not Equal that(%v)", *this.NeedTaskIds, *that1.NeedTaskIds)
+			return fmt.Errorf("NeedTaskIds this(%v) Not Equal that(%v)", *this.NeedTaskIds, *that1.NeedTaskIds)
 		}
 	} else if this.NeedTaskIds != nil {
-		return fmt2.Errorf("this.NeedTaskIds == nil && that.NeedTaskIds != nil")
+		return fmt.Errorf("this.NeedTaskIds == nil && that.NeedTaskIds != nil")
 	} else if that1.NeedTaskIds != nil {
-		return fmt2.Errorf("NeedTaskIds this(%v) Not Equal that(%v)", this.NeedTaskIds, that1.NeedTaskIds)
+		return fmt.Errorf("NeedTaskIds this(%v) Not Equal that(%v)", this.NeedTaskIds, that1.NeedTaskIds)
 	}
 	if this.Msg != nil && that1.Msg != nil {
 		if *this.Msg != *that1.Msg {
-			return fmt2.Errorf("Msg this(%v) Not Equal that(%v)", *this.Msg, *that1.Msg)
+			return fmt.Errorf("Msg this(%v) Not Equal that(%v)", *this.Msg, *that1.Msg)
 		}
 	} else if this.Msg != nil {
-		return fmt2.Errorf("this.Msg == nil && that.Msg != nil")
+		return fmt.Errorf("this.Msg == nil && that.Msg != nil")
 	} else if that1.Msg != nil {
-		return fmt2.Errorf("Msg this(%v) Not Equal that(%v)", this.Msg, that1.Msg)
+		return fmt.Errorf("Msg this(%v) Not Equal that(%v)", this.Msg, that1.Msg)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3419,34 +1145,34 @@ func (this *ShellMsgProto) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ShellMsgProto)
 	if !ok {
-		return fmt2.Errorf("that is not of type *ShellMsgProto")
+		return fmt.Errorf("that is not of type *ShellMsgProto")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *ShellMsgProto but is nil && this != nil")
+		return fmt.Errorf("that is type *ShellMsgProto but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *ShellMsgProtobut is not nil && this == nil")
+		return fmt.Errorf("that is type *ShellMsgProtobut is not nil && this == nil")
 	}
 	if !this.ShellMsgMeta.Equal(that1.ShellMsgMeta) {
-		return fmt2.Errorf("ShellMsgMeta this(%v) Not Equal that(%v)", this.ShellMsgMeta, that1.ShellMsgMeta)
+		return fmt.Errorf("ShellMsgMeta this(%v) Not Equal that(%v)", this.ShellMsgMeta, that1.ShellMsgMeta)
 	}
 	if len(this.Contents) != len(that1.Contents) {
-		return fmt2.Errorf("Contents this(%v) Not Equal that(%v)", len(this.Contents), len(that1.Contents))
+		return fmt.Errorf("Contents this(%v) Not Equal that(%v)", len(this.Contents), len(that1.Contents))
 	}
 	for i := range this.Contents {
 		if !bytes.Equal(this.Contents[i], that1.Contents[i]) {
-			return fmt2.Errorf("Contents this[%v](%v) Not Equal that[%v](%v)", i, this.Contents[i], i, that1.Contents[i])
+			return fmt.Errorf("Contents this[%v](%v) Not Equal that[%v](%v)", i, this.Contents[i], i, that1.Contents[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3491,32 +1217,32 @@ func (this *Test) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Test)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Test")
+		return fmt.Errorf("that is not of type *Test")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Test but is nil && this != nil")
+		return fmt.Errorf("that is type *Test but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Testbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Testbut is not nil && this == nil")
 	}
 	if this.Name != that1.Name {
-		return fmt2.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
 	if this.Number != that1.Number {
-		return fmt2.Errorf("Number this(%v) Not Equal that(%v)", this.Number, that1.Number)
+		return fmt.Errorf("Number this(%v) Not Equal that(%v)", this.Number, that1.Number)
 	}
 	if !bytes.Equal(this.Data, that1.Data) {
-		return fmt2.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
+		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3554,3 +1280,2705 @@ func (this *Test) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (m *TaskComponentMapping) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *TaskComponentMapping) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Task)))
+	i += copy(data[i:], m.Task)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Component)))
+	i += copy(data[i:], m.Component)
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Topology) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Topology) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0x8
+	i++
+	i = encodeVarintMessages(data, i, uint64(m.TaskId))
+	if len(m.TaskComponentMappings) > 0 {
+		for _, msg := range m.TaskComponentMappings {
+			data[i] = 0x12
+			i++
+			i = encodeVarintMessages(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Conf) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Conf) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Key)))
+	i += copy(data[i:], m.Key)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Value)))
+	i += copy(data[i:], m.Value)
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Context) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Context) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.PidDir)))
+	i += copy(data[i:], m.PidDir)
+	if m.Topology != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintMessages(data, i, uint64(m.Topology.Size()))
+		n1, err := m.Topology.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n1
+	}
+	if len(m.Confs) > 0 {
+		for _, msg := range m.Confs {
+			data[i] = 0x1a
+			i++
+			i = encodeVarintMessages(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Pid) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Pid) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0x8
+	i++
+	i = encodeVarintMessages(data, i, uint64(m.Pid))
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *BoltMsgMeta) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *BoltMsgMeta) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Id)))
+	i += copy(data[i:], m.Id)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Comp)))
+	i += copy(data[i:], m.Comp)
+	data[i] = 0x1a
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Stream)))
+	i += copy(data[i:], m.Stream)
+	data[i] = 0x20
+	i++
+	i = encodeVarintMessages(data, i, uint64(m.Task))
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *BoltMsgProto) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *BoltMsgProto) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.BoltMsgMeta != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintMessages(data, i, uint64(m.BoltMsgMeta.Size()))
+		n2, err := m.BoltMsgMeta.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n2
+	}
+	if len(m.Contents) > 0 {
+		for _, b := range m.Contents {
+			data[i] = 0x12
+			i++
+			i = encodeVarintMessages(data, i, uint64(len(b)))
+			i += copy(data[i:], b)
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *TaskIds) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *TaskIds) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.TaskIds) > 0 {
+		for _, num := range m.TaskIds {
+			data[i] = 0x8
+			i++
+			i = encodeVarintMessages(data, i, uint64(num))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *SpoutMsg) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *SpoutMsg) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Command)))
+	i += copy(data[i:], m.Command)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Id)))
+	i += copy(data[i:], m.Id)
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *ShellMsgMeta) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ShellMsgMeta) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Command)))
+	i += copy(data[i:], m.Command)
+	if m.Id != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintMessages(data, i, uint64(len(*m.Id)))
+		i += copy(data[i:], *m.Id)
+	}
+	if len(m.Anchors) > 0 {
+		for _, s := range m.Anchors {
+			data[i] = 0x1a
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				data[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			data[i] = uint8(l)
+			i++
+			i += copy(data[i:], s)
+		}
+	}
+	if m.Stream != nil {
+		data[i] = 0x22
+		i++
+		i = encodeVarintMessages(data, i, uint64(len(*m.Stream)))
+		i += copy(data[i:], *m.Stream)
+	}
+	if m.Task != nil {
+		data[i] = 0x28
+		i++
+		i = encodeVarintMessages(data, i, uint64(*m.Task))
+	}
+	if m.NeedTaskIds != nil {
+		data[i] = 0x30
+		i++
+		if *m.NeedTaskIds {
+			data[i] = 1
+		} else {
+			data[i] = 0
+		}
+		i++
+	}
+	if m.Msg != nil {
+		data[i] = 0x3a
+		i++
+		i = encodeVarintMessages(data, i, uint64(len(*m.Msg)))
+		i += copy(data[i:], *m.Msg)
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *ShellMsgProto) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ShellMsgProto) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ShellMsgMeta != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintMessages(data, i, uint64(m.ShellMsgMeta.Size()))
+		n3, err := m.ShellMsgMeta.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n3
+	}
+	if len(m.Contents) > 0 {
+		for _, b := range m.Contents {
+			data[i] = 0x12
+			i++
+			i = encodeVarintMessages(data, i, uint64(len(b)))
+			i += copy(data[i:], b)
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Test) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Test) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintMessages(data, i, uint64(len(m.Name)))
+	i += copy(data[i:], m.Name)
+	data[i] = 0x10
+	i++
+	i = encodeVarintMessages(data, i, uint64(m.Number))
+	if m.Data != nil {
+		data[i] = 0x1a
+		i++
+		i = encodeVarintMessages(data, i, uint64(len(m.Data)))
+		i += copy(data[i:], m.Data)
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func encodeFixed64Messages(data []byte, offset int, v uint64) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
+	data[offset+4] = uint8(v >> 32)
+	data[offset+5] = uint8(v >> 40)
+	data[offset+6] = uint8(v >> 48)
+	data[offset+7] = uint8(v >> 56)
+	return offset + 8
+}
+func encodeFixed32Messages(data []byte, offset int, v uint32) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
+	return offset + 4
+}
+func encodeVarintMessages(data []byte, offset int, v uint64) int {
+	for v >= 1<<7 {
+		data[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	data[offset] = uint8(v)
+	return offset + 1
+}
+func NewPopulatedTaskComponentMapping(r randyMessages, easy bool) *TaskComponentMapping {
+	this := &TaskComponentMapping{}
+	this.Task = randStringMessages(r)
+	this.Component = randStringMessages(r)
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedTopology(r randyMessages, easy bool) *Topology {
+	this := &Topology{}
+	this.TaskId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.TaskId *= -1
+	}
+	if r.Intn(10) != 0 {
+		v1 := r.Intn(10)
+		this.TaskComponentMappings = make([]*TaskComponentMapping, v1)
+		for i := 0; i < v1; i++ {
+			this.TaskComponentMappings[i] = NewPopulatedTaskComponentMapping(r, easy)
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedConf(r randyMessages, easy bool) *Conf {
+	this := &Conf{}
+	this.Key = randStringMessages(r)
+	this.Value = randStringMessages(r)
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedContext(r randyMessages, easy bool) *Context {
+	this := &Context{}
+	this.PidDir = randStringMessages(r)
+	if r.Intn(10) != 0 {
+		this.Topology = NewPopulatedTopology(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		v2 := r.Intn(10)
+		this.Confs = make([]*Conf, v2)
+		for i := 0; i < v2; i++ {
+			this.Confs[i] = NewPopulatedConf(r, easy)
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 4)
+	}
+	return this
+}
+
+func NewPopulatedPid(r randyMessages, easy bool) *Pid {
+	this := &Pid{}
+	this.Pid = int32(r.Int31())
+	if r.Intn(2) == 0 {
+		this.Pid *= -1
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 2)
+	}
+	return this
+}
+
+func NewPopulatedBoltMsgMeta(r randyMessages, easy bool) *BoltMsgMeta {
+	this := &BoltMsgMeta{}
+	this.Id = randStringMessages(r)
+	this.Comp = randStringMessages(r)
+	this.Stream = randStringMessages(r)
+	this.Task = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Task *= -1
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 5)
+	}
+	return this
+}
+
+func NewPopulatedBoltMsgProto(r randyMessages, easy bool) *BoltMsgProto {
+	this := &BoltMsgProto{}
+	if r.Intn(10) != 0 {
+		this.BoltMsgMeta = NewPopulatedBoltMsgMeta(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		v3 := r.Intn(100)
+		this.Contents = make([][]byte, v3)
+		for i := 0; i < v3; i++ {
+			v4 := r.Intn(100)
+			this.Contents[i] = make([]byte, v4)
+			for j := 0; j < v4; j++ {
+				this.Contents[i][j] = byte(r.Intn(256))
+			}
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedTaskIds(r randyMessages, easy bool) *TaskIds {
+	this := &TaskIds{}
+	if r.Intn(10) != 0 {
+		v5 := r.Intn(100)
+		this.TaskIds = make([]int32, v5)
+		for i := 0; i < v5; i++ {
+			this.TaskIds[i] = int32(r.Int31())
+			if r.Intn(2) == 0 {
+				this.TaskIds[i] *= -1
+			}
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 2)
+	}
+	return this
+}
+
+func NewPopulatedSpoutMsg(r randyMessages, easy bool) *SpoutMsg {
+	this := &SpoutMsg{}
+	this.Command = randStringMessages(r)
+	this.Id = randStringMessages(r)
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedShellMsgMeta(r randyMessages, easy bool) *ShellMsgMeta {
+	this := &ShellMsgMeta{}
+	this.Command = randStringMessages(r)
+	if r.Intn(10) != 0 {
+		v6 := randStringMessages(r)
+		this.Id = &v6
+	}
+	if r.Intn(10) != 0 {
+		v7 := r.Intn(10)
+		this.Anchors = make([]string, v7)
+		for i := 0; i < v7; i++ {
+			this.Anchors[i] = randStringMessages(r)
+		}
+	}
+	if r.Intn(10) != 0 {
+		v8 := randStringMessages(r)
+		this.Stream = &v8
+	}
+	if r.Intn(10) != 0 {
+		v9 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v9 *= -1
+		}
+		this.Task = &v9
+	}
+	if r.Intn(10) != 0 {
+		v10 := bool(bool(r.Intn(2) == 0))
+		this.NeedTaskIds = &v10
+	}
+	if r.Intn(10) != 0 {
+		v11 := randStringMessages(r)
+		this.Msg = &v11
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 8)
+	}
+	return this
+}
+
+func NewPopulatedShellMsgProto(r randyMessages, easy bool) *ShellMsgProto {
+	this := &ShellMsgProto{}
+	if r.Intn(10) != 0 {
+		this.ShellMsgMeta = NewPopulatedShellMsgMeta(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		v12 := r.Intn(100)
+		this.Contents = make([][]byte, v12)
+		for i := 0; i < v12; i++ {
+			v13 := r.Intn(100)
+			this.Contents[i] = make([]byte, v13)
+			for j := 0; j < v13; j++ {
+				this.Contents[i][j] = byte(r.Intn(256))
+			}
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 3)
+	}
+	return this
+}
+
+func NewPopulatedTest(r randyMessages, easy bool) *Test {
+	this := &Test{}
+	this.Name = randStringMessages(r)
+	this.Number = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Number *= -1
+	}
+	if r.Intn(10) != 0 {
+		v14 := r.Intn(100)
+		this.Data = make([]byte, v14)
+		for i := 0; i < v14; i++ {
+			this.Data[i] = byte(r.Intn(256))
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 4)
+	}
+	return this
+}
+
+type randyMessages interface {
+	Float32() float32
+	Float64() float64
+	Int63() int64
+	Int31() int32
+	Uint32() uint32
+	Intn(n int) int
+}
+
+func randUTF8RuneMessages(r randyMessages) rune {
+	ru := r.Intn(62)
+	if ru < 10 {
+		return rune(ru + 48)
+	} else if ru < 36 {
+		return rune(ru + 55)
+	}
+	return rune(ru + 61)
+}
+func randStringMessages(r randyMessages) string {
+	v15 := r.Intn(100)
+	tmps := make([]rune, v15)
+	for i := 0; i < v15; i++ {
+		tmps[i] = randUTF8RuneMessages(r)
+	}
+	return string(tmps)
+}
+func randUnrecognizedMessages(r randyMessages, maxFieldNumber int) (data []byte) {
+	l := r.Intn(5)
+	for i := 0; i < l; i++ {
+		wire := r.Intn(4)
+		if wire == 3 {
+			wire = 5
+		}
+		fieldNumber := maxFieldNumber + r.Intn(100)
+		data = randFieldMessages(data, r, fieldNumber, wire)
+	}
+	return data
+}
+func randFieldMessages(data []byte, r randyMessages, fieldNumber int, wire int) []byte {
+	key := uint32(fieldNumber)<<3 | uint32(wire)
+	switch wire {
+	case 0:
+		data = encodeVarintPopulateMessages(data, uint64(key))
+		v16 := r.Int63()
+		if r.Intn(2) == 0 {
+			v16 *= -1
+		}
+		data = encodeVarintPopulateMessages(data, uint64(v16))
+	case 1:
+		data = encodeVarintPopulateMessages(data, uint64(key))
+		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
+	case 2:
+		data = encodeVarintPopulateMessages(data, uint64(key))
+		ll := r.Intn(100)
+		data = encodeVarintPopulateMessages(data, uint64(ll))
+		for j := 0; j < ll; j++ {
+			data = append(data, byte(r.Intn(256)))
+		}
+	default:
+		data = encodeVarintPopulateMessages(data, uint64(key))
+		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
+	}
+	return data
+}
+func encodeVarintPopulateMessages(data []byte, v uint64) []byte {
+	for v >= 1<<7 {
+		data = append(data, uint8(uint64(v)&0x7f|0x80))
+		v >>= 7
+	}
+	data = append(data, uint8(v))
+	return data
+}
+func (m *TaskComponentMapping) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Task)
+	n += 1 + l + sovMessages(uint64(l))
+	l = len(m.Component)
+	n += 1 + l + sovMessages(uint64(l))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Topology) Size() (n int) {
+	var l int
+	_ = l
+	n += 1 + sovMessages(uint64(m.TaskId))
+	if len(m.TaskComponentMappings) > 0 {
+		for _, e := range m.TaskComponentMappings {
+			l = e.Size()
+			n += 1 + l + sovMessages(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Conf) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Key)
+	n += 1 + l + sovMessages(uint64(l))
+	l = len(m.Value)
+	n += 1 + l + sovMessages(uint64(l))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Context) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.PidDir)
+	n += 1 + l + sovMessages(uint64(l))
+	if m.Topology != nil {
+		l = m.Topology.Size()
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if len(m.Confs) > 0 {
+		for _, e := range m.Confs {
+			l = e.Size()
+			n += 1 + l + sovMessages(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Pid) Size() (n int) {
+	var l int
+	_ = l
+	n += 1 + sovMessages(uint64(m.Pid))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *BoltMsgMeta) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Id)
+	n += 1 + l + sovMessages(uint64(l))
+	l = len(m.Comp)
+	n += 1 + l + sovMessages(uint64(l))
+	l = len(m.Stream)
+	n += 1 + l + sovMessages(uint64(l))
+	n += 1 + sovMessages(uint64(m.Task))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *BoltMsgProto) Size() (n int) {
+	var l int
+	_ = l
+	if m.BoltMsgMeta != nil {
+		l = m.BoltMsgMeta.Size()
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if len(m.Contents) > 0 {
+		for _, b := range m.Contents {
+			l = len(b)
+			n += 1 + l + sovMessages(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *TaskIds) Size() (n int) {
+	var l int
+	_ = l
+	if len(m.TaskIds) > 0 {
+		for _, e := range m.TaskIds {
+			n += 1 + sovMessages(uint64(e))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *SpoutMsg) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Command)
+	n += 1 + l + sovMessages(uint64(l))
+	l = len(m.Id)
+	n += 1 + l + sovMessages(uint64(l))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ShellMsgMeta) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Command)
+	n += 1 + l + sovMessages(uint64(l))
+	if m.Id != nil {
+		l = len(*m.Id)
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if len(m.Anchors) > 0 {
+		for _, s := range m.Anchors {
+			l = len(s)
+			n += 1 + l + sovMessages(uint64(l))
+		}
+	}
+	if m.Stream != nil {
+		l = len(*m.Stream)
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if m.Task != nil {
+		n += 1 + sovMessages(uint64(*m.Task))
+	}
+	if m.NeedTaskIds != nil {
+		n += 2
+	}
+	if m.Msg != nil {
+		l = len(*m.Msg)
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ShellMsgProto) Size() (n int) {
+	var l int
+	_ = l
+	if m.ShellMsgMeta != nil {
+		l = m.ShellMsgMeta.Size()
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if len(m.Contents) > 0 {
+		for _, b := range m.Contents {
+			l = len(b)
+			n += 1 + l + sovMessages(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Test) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Name)
+	n += 1 + l + sovMessages(uint64(l))
+	n += 1 + sovMessages(uint64(m.Number))
+	if m.Data != nil {
+		l = len(m.Data)
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func sovMessages(x uint64) (n int) {
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
+}
+func sozMessages(x uint64) (n int) {
+	return sovMessages(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (this *TaskComponentMapping) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&TaskComponentMapping{`,
+		`Task:` + fmt.Sprintf("%v", this.Task) + `,`,
+		`Component:` + fmt.Sprintf("%v", this.Component) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Topology) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Topology{`,
+		`TaskId:` + fmt.Sprintf("%v", this.TaskId) + `,`,
+		`TaskComponentMappings:` + strings.Replace(fmt.Sprintf("%v", this.TaskComponentMappings), "TaskComponentMapping", "TaskComponentMapping", 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Conf) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Conf{`,
+		`Key:` + fmt.Sprintf("%v", this.Key) + `,`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Context) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Context{`,
+		`PidDir:` + fmt.Sprintf("%v", this.PidDir) + `,`,
+		`Topology:` + strings.Replace(fmt.Sprintf("%v", this.Topology), "Topology", "Topology", 1) + `,`,
+		`Confs:` + strings.Replace(fmt.Sprintf("%v", this.Confs), "Conf", "Conf", 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Pid) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Pid{`,
+		`Pid:` + fmt.Sprintf("%v", this.Pid) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *BoltMsgMeta) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&BoltMsgMeta{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`Comp:` + fmt.Sprintf("%v", this.Comp) + `,`,
+		`Stream:` + fmt.Sprintf("%v", this.Stream) + `,`,
+		`Task:` + fmt.Sprintf("%v", this.Task) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *BoltMsgProto) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&BoltMsgProto{`,
+		`BoltMsgMeta:` + strings.Replace(fmt.Sprintf("%v", this.BoltMsgMeta), "BoltMsgMeta", "BoltMsgMeta", 1) + `,`,
+		`Contents:` + fmt.Sprintf("%v", this.Contents) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *TaskIds) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&TaskIds{`,
+		`TaskIds:` + fmt.Sprintf("%v", this.TaskIds) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *SpoutMsg) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&SpoutMsg{`,
+		`Command:` + fmt.Sprintf("%v", this.Command) + `,`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ShellMsgMeta) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ShellMsgMeta{`,
+		`Command:` + fmt.Sprintf("%v", this.Command) + `,`,
+		`Id:` + valueToStringMessages(this.Id) + `,`,
+		`Anchors:` + fmt.Sprintf("%v", this.Anchors) + `,`,
+		`Stream:` + valueToStringMessages(this.Stream) + `,`,
+		`Task:` + valueToStringMessages(this.Task) + `,`,
+		`NeedTaskIds:` + valueToStringMessages(this.NeedTaskIds) + `,`,
+		`Msg:` + valueToStringMessages(this.Msg) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ShellMsgProto) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ShellMsgProto{`,
+		`ShellMsgMeta:` + strings.Replace(fmt.Sprintf("%v", this.ShellMsgMeta), "ShellMsgMeta", "ShellMsgMeta", 1) + `,`,
+		`Contents:` + fmt.Sprintf("%v", this.Contents) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Test) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Test{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Number:` + fmt.Sprintf("%v", this.Number) + `,`,
+		`Data:` + valueToStringMessages(this.Data) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func valueToStringMessages(v interface{}) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("*%v", pv)
+}
+func (m *TaskComponentMapping) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TaskComponentMapping: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TaskComponentMapping: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Task = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Component", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Component = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Topology) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Topology: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Topology: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
+			}
+			m.TaskId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.TaskId |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskComponentMappings", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TaskComponentMappings = append(m.TaskComponentMappings, &TaskComponentMapping{})
+			if err := m.TaskComponentMappings[len(m.TaskComponentMappings)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Conf) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Conf: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Conf: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Key = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Value = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Context) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Context: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Context: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PidDir", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PidDir = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Topology", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Topology == nil {
+				m.Topology = &Topology{}
+			}
+			if err := m.Topology.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Confs", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Confs = append(m.Confs, &Conf{})
+			if err := m.Confs[len(m.Confs)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Pid) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Pid: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Pid: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pid", wireType)
+			}
+			m.Pid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.Pid |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *BoltMsgMeta) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BoltMsgMeta: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BoltMsgMeta: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Comp", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Comp = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stream", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Stream = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
+			}
+			m.Task = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.Task |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *BoltMsgProto) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BoltMsgProto: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BoltMsgProto: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BoltMsgMeta", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.BoltMsgMeta == nil {
+				m.BoltMsgMeta = &BoltMsgMeta{}
+			}
+			if err := m.BoltMsgMeta.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Contents", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Contents = append(m.Contents, make([]byte, postIndex-iNdEx))
+			copy(m.Contents[len(m.Contents)-1], data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TaskIds) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TaskIds: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TaskIds: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskIds", wireType)
+			}
+			var v int32
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				v |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.TaskIds = append(m.TaskIds, v)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SpoutMsg) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SpoutMsg: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SpoutMsg: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Command", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Command = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ShellMsgMeta) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ShellMsgMeta: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ShellMsgMeta: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Command", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Command = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[iNdEx:postIndex])
+			m.Id = &s
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Anchors", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Anchors = append(m.Anchors, string(data[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stream", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[iNdEx:postIndex])
+			m.Stream = &s
+			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
+			}
+			var v int64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				v |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Task = &v
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NeedTaskIds", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.NeedTaskIds = &b
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(data[iNdEx:postIndex])
+			m.Msg = &s
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ShellMsgProto) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ShellMsgProto: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ShellMsgProto: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ShellMsgMeta", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ShellMsgMeta == nil {
+				m.ShellMsgMeta = &ShellMsgMeta{}
+			}
+			if err := m.ShellMsgMeta.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Contents", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Contents = append(m.Contents, make([]byte, postIndex-iNdEx))
+			copy(m.Contents[len(m.Contents)-1], data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Test) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Test: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Test: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Number", wireType)
+			}
+			m.Number = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.Number |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Data = append([]byte{}, data[iNdEx:postIndex]...)
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessages(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMessages
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipMessages(data []byte) (n int, err error) {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowMessages
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if data[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+			return iNdEx, nil
+		case 1:
+			iNdEx += 8
+			return iNdEx, nil
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			iNdEx += length
+			if length < 0 {
+				return 0, ErrInvalidLengthMessages
+			}
+			return iNdEx, nil
+		case 3:
+			for {
+				var innerWire uint64
+				var start int = iNdEx
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return 0, ErrIntOverflowMessages
+					}
+					if iNdEx >= l {
+						return 0, io.ErrUnexpectedEOF
+					}
+					b := data[iNdEx]
+					iNdEx++
+					innerWire |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				innerWireType := int(innerWire & 0x7)
+				if innerWireType == 4 {
+					break
+				}
+				next, err := skipMessages(data[start:])
+				if err != nil {
+					return 0, err
+				}
+				iNdEx = start + next
+			}
+			return iNdEx, nil
+		case 4:
+			return iNdEx, nil
+		case 5:
+			iNdEx += 4
+			return iNdEx, nil
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+	}
+	panic("unreachable")
+}
+
+var (
+	ErrInvalidLengthMessages = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowMessages   = fmt.Errorf("proto: integer overflow")
+)

@@ -1,14 +1,13 @@
+syntax = "proto2";
 package messages;
 
-import "code.google.com/p/gogoprotobuf/gogoproto/gogo.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 option (gogoproto.verbose_equal_all) = true;
 option (gogoproto.equal_all) = true;
 option (gogoproto.populate_all) = true;
 option (gogoproto.stringer_all) = true;
 option (gogoproto.goproto_stringer_all) = false;
-option (gogoproto.unsafe_unmarshaler_all) = true;
-option (gogoproto.unsafe_marshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 
 message TaskComponentMapping {
@@ -75,5 +74,5 @@ message ShellMsgProto {
 message Test {
 	optional string Name = 1 [(gogoproto.nullable) = false];
 	optional int64 Number = 2 [(gogoproto.nullable) = false];
-	optional bytes Data = 3 [(gogoproto.nullable) = false];
+	optional bytes Data = 3;
 }
