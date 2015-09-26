@@ -16,10 +16,10 @@ package protobuf
 
 import (
 	"bufio"
-	"code.google.com/p/gogoprotobuf/proto"
 	"container/list"
 	"encoding/binary"
 	"fmt"
+	proto "github.com/gogo/protobuf/gogoproto/gogo.proto"
 	"github.com/jsgilmore/gostorm/core"
 	"github.com/jsgilmore/gostorm/messages"
 	"io"
