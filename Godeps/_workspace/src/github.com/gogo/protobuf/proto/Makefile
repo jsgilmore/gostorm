@@ -1,4 +1,7 @@
-# Copyright (c) 2015, Vastech SA (PTY) LTD. All rights reserved.
+# Go support for Protocol Buffers - Google's data interchange format
+#
+# Copyright 2010 The Go Authors.  All rights reserved.
+# https://github.com/golang/protobuf
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -10,6 +13,9 @@
 # copyright notice, this list of conditions and the following disclaimer
 # in the documentation and/or other materials provided with the
 # distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -23,32 +29,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-all:
-	make nuke
-	make install
-	make regenerate
-	make gofmt
-	make install
-	make test
-
 install:
-	go install -v ./...
+	go install
 
-clean:
-	go clean ./...
+test: install generate-test-pbs
+	go test
 
-nuke:
-	go clean -i ./...
 
-test:
-	go test -v ./test/...
-
-regenerate:
-	(cd messages && protoc --proto_path=$(GOPATH)/src:$(GOPATH)/src/github.com/gogo/protobuf/protobuf:. --gogofast_out=. messages.proto)
-
-gofmt:
-	gofmt -l -s -w .
-
-drone:
+generate-test-pbs:
 	make install
-	go test -v ./test/...
+	make -C testdata
+	protoc-min-version --version="3.0.0" --proto_path=.:../../../../ --gogo_out=. proto3_proto/proto3.proto
+	make

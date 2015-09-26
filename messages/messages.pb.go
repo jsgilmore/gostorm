@@ -24,7 +24,7 @@
 */
 package messages
 
-import proto "github.com/gogo/protobuf/proto"
+import proto "github.com/jsgilmore/gostorm/Godeps/_workspace/src/github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
