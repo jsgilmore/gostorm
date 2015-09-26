@@ -17,7 +17,7 @@ package protobuf
 import (
 	"bytes"
 	"fmt"
-	proto "github.com/gogo/protobuf/gogoproto/gogo.proto"
+	proto "github.com/gogo/protobuf/proto"
 	"github.com/jsgilmore/gostorm/messages"
 	"math/rand"
 	"testing"

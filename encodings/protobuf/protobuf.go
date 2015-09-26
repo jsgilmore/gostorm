@@ -19,7 +19,7 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
-	proto "github.com/gogo/protobuf/gogoproto/gogo.proto"
+	proto "github.com/gogo/protobuf/proto"
 	"github.com/jsgilmore/gostorm/core"
 	"github.com/jsgilmore/gostorm/messages"
 	"io"
