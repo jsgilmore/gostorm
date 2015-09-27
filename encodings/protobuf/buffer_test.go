@@ -28,10 +28,6 @@ func TestHeapAllocator(t *testing.T) {
 	testallocator(t, NewAllocatorHeap())
 }
 
-func TestMappedAllocator(t *testing.T) {
-	testallocator(t, NewAllocatorMapped())
-}
-
 func benchallocator(b *testing.B, allocator Allocator, size int) {
 	b.ResetTimer()
 	b.StartTimer()
@@ -55,21 +51,9 @@ func BenchmarkHeapAllocator128K(b *testing.B) {
 	benchallocator(b, NewAllocatorHeap(), 128<<10)
 }
 
-func BenchmarkMappedAllocator1K(b *testing.B) {
-	benchallocator(b, NewAllocatorMapped(), 1<<10)
-}
-
-func BenchmarkMappedAllocator4K(b *testing.B) {
-	benchallocator(b, NewAllocatorMapped(), 4<<10)
-}
-
-func BenchmarkMappedAllocator128K(b *testing.B) {
-	benchallocator(b, NewAllocatorMapped(), 128<<10)
-}
-
 func TestSinglePool(t *testing.T) {
 	const size = 4 << 10
-	pool := NewBufferPoolSingle(NewAllocatorMapped())
+	pool := NewBufferPoolSingle(NewAllocatorHeap())
 	Assert(t, pool != nil)
 	Assert(t, pool.(*singlePool).cached == nil)
 	buffer := pool.New(size)
@@ -105,46 +89,6 @@ func max(a, b int) int {
 	return b
 }
 
-func TestFixedPool(t *testing.T) {
-	const (
-		size     = 4 << 10
-		capacity = 32
-	)
-	pool := NewBufferPoolFixed(NewAllocatorHeap(), size, capacity)
-	Assert(t, pool != nil)
-	Assert(t, len(pool.(*fixedPool).free) == 0)
-	Assert(t, cap(pool.(*fixedPool).free) == capacity)
-	var buffers [][]byte
-	for k := 0; k < 2*capacity; k++ {
-		buffer := pool.New(size)
-		Assert(t, len(buffer) == size)
-		Assert(t, len(pool.(*fixedPool).free) == 0)
-		Assert(t, cap(pool.(*fixedPool).free) == capacity)
-		buffers = append(buffers, buffer)
-	}
-	for k, b := range buffers {
-		pool.Dispose(b)
-		Assert(t, len(pool.(*fixedPool).free) == min(k+1, capacity))
-		Assert(t, cap(pool.(*fixedPool).free) == capacity)
-	}
-	buffers = nil
-	for k := 1; k <= 2*capacity; k++ {
-		buffer := pool.New(size)
-		Assert(t, len(buffer) == size)
-		Assert(t, len(pool.(*fixedPool).free) == max(0, capacity-k))
-		Assert(t, cap(pool.(*fixedPool).free) == capacity)
-		buffers = append(buffers, buffer)
-	}
-	for k, b := range buffers {
-		pool.Dispose(b)
-		Assert(t, len(pool.(*fixedPool).free) == min(k+1, capacity))
-		Assert(t, cap(pool.(*fixedPool).free) == capacity)
-	}
-	pool.Close()
-	Assert(t, len(pool.(*fixedPool).free) == 0)
-	Assert(t, cap(pool.(*fixedPool).free) == capacity)
-}
-
 func benchbufferpool(b *testing.B, pool BufferPool, size int) {
 	b.ResetTimer()
 	b.StartTimer()
@@ -157,14 +101,7 @@ func benchbufferpool(b *testing.B, pool BufferPool, size int) {
 }
 
 func BenchmarkSinglePool128K(b *testing.B) {
-	pool := NewBufferPoolSingle(NewAllocatorMapped())
+	pool := NewBufferPoolSingle(NewAllocatorHeap())
 	benchbufferpool(b, pool, 128<<10)
-	pool.Close()
-}
-
-func BenchmarkFixedPool128K(b *testing.B) {
-	const size = 128 << 10
-	pool := NewBufferPoolFixed(NewAllocatorMapped(), size, 32)
-	benchbufferpool(b, pool, size)
 	pool.Close()
 }
