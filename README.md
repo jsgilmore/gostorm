@@ -14,6 +14,8 @@ For testing and evaluation purposes, the GoStorm release also contains its own s
 
 GoStorm implements (and enforces) the Storm [multilang protocol](https://github.com/nathanmarz/storm/wiki/Multilang-protocol). Apart from implementing the multilang JSON protocol that is used by Storm shell components, GoStorm also implements a protocol buffer binary encoding scheme for improved performance. The protocol buffer encoding requires the Storm [protoshell](https://github.com/jsgilmore/protoshell) multilang serialiser and Storm 0.9.2 or later.
 
+GoStorm itself requires Storm 0.10.0 or later.
+
 ##Encoding
 GoStorm implements various encoding schemes with varying levels of performance:
 
