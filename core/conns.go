@@ -17,10 +17,11 @@ package core
 import (
 	"errors"
 	"fmt"
-	"github.com/jsgilmore/gostorm/messages"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/jsgilmore/gostorm/messages"
 )
 
 // BoltConn is the interface that implements the possible bolt actions
@@ -145,17 +146,20 @@ func newTupleMetadata(id, comp, stream string, task int64) *messages.BoltMsgMeta
 // otherwise Storm will report an error.
 func (this *boltConnImpl) SendAck(id string) {
 	this.EmitGeneric("ack", id, "", "", nil, 0, false)
+	this.Flush()
 }
 
 // SendFail reports that the message with the given Id failed
 // No emission should be anchored to a failed message Id
 func (this *boltConnImpl) SendFail(id string) {
 	this.EmitGeneric("fail", id, "", "", nil, 0, false)
+	this.Flush()
 }
 
 // SendSync sends a sync typically in response to a heartbeat
 func (this *boltConnImpl) SendSync() {
 	this.EmitGeneric("sync", "", "", "", nil, 0, false)
+	this.Flush()
 }
 
 // Emit emits a tuple with the given array of interface{}s as values,
