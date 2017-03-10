@@ -51,8 +51,8 @@ func (this *jsonEncodedInput) constructInput(contents ...interface{}) []interfac
 }
 
 func (this *jsonEncodedInput) decodeInput(contentList []interface{}, contentStructs ...interface{}) {
-	for i, content := range contentStructs {
-		err := json.Unmarshal(*contentList[i].(*[]byte), content)
+	for i, content := range contentList {
+		err := json.Unmarshal(*content.(*[]byte), contentStructs[i])
 		if err != nil {
 			panic(err)
 		}
