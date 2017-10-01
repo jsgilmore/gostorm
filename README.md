@@ -1,4 +1,4 @@
-#gostorm
+# gostorm
 
 [![Build Status](https://drone.io/github.com/jsgilmore/gostorm/status.png)](https://drone.io/github.com/jsgilmore/gostorm/latest)
 
@@ -16,7 +16,8 @@ GoStorm implements (and enforces) the Storm [multilang protocol](https://github.
 
 GoStorm itself requires Storm 0.10.0 or later.
 
-##Encoding
+## Encoding
+
 GoStorm implements various encoding schemes with varying levels of performance:
 
 1. jsonobject
@@ -34,10 +35,12 @@ The protobuf scheme is a pure protocol buffer encoding and requires specialised 
 
 I would suggest starting with the jsonencoded scheme and benchmarking your application. If the throughput doesn't suit your needs, start converting your project to use protocol buffers. This allows for the hybrid scheme to be used, without requiring any changes to Storm. For best performance, the protobuf encoding can be used, but this requires some changes in the Storm cluster's configuration.
 
-##Bolts
+## Bolts
+
 This section will describe how to write bolts using the GoStorm library.
 
-###Creating a bolt
+### Creating a bolt
+
 To create a bolt, you just have to create a Go "object" that implements the Bolt interface:
 ```go
 type Bolt interface {
@@ -58,7 +61,7 @@ A bolt receives messages with the Execute method. BoltMsgMeta contains informati
 
 Cleanup is called if the topology completes. This will only happen during testing, for finite input streams.
 
-The fields factory declares the message types that the bolt expects to receive. In other words, these fields must match the field types of the execute method. Specifically, GoStorm uses these empty objects to marshal received objects into. 
+The fields factory declares the message types that the bolt expects to receive. In other words, these fields must match the field types of the execute method. Specifically, GoStorm uses these empty objects to marshal received objects into.
 
 To write a bolt, import the following:
 ```go
@@ -70,7 +73,8 @@ import (
 
 The gostorm import contains the spout and bolt interfaces and the messages import contains the required gostorm message types.
 
-###Running a bolt
+### Running a bolt
+
 All that remains is for you to write a main method for your bolt. The main method will run the bolt, specify the encoding that might be used and state whether destination task ids are required (more on that later). It will typically look something like this:
 ```go
 package main
@@ -90,7 +94,8 @@ func main() {
 
 The gostorm import contains the RunBolt function. The encodings import imports all GoStorm encodings and allows any of them to be specified in the RunBolt method. This also allows you to use a Go flag and specify the encoding to use at runtime.
 
-###Emitting tuples
+### Emitting tuples
+
 To emit tuples (objects) to another bolt, the bolt output collector is used:
 ```go
 type OutputCollector interface {
@@ -117,16 +122,19 @@ If the bolt has a single output stream, the "default" or the empty ("") string c
 The EmitDirect function can be used to emit a tuple directly to a task.
 
 ### Message unions
+
 A union message type is always emitted (myBoltEvent). The union message contains pointers to all the message types that our bolt can emit. Whenever a message is emitted, it is first placed in the union message structure. This way, the receiver always knows what message type to cast to and can then check for a non-nil element in the union message.
 
 The last two objects in the Emit call are the contents of the message that will be transferred to the receiving bolt in the form that they are Emitted here. It is possible to specify any number of objects. In the above example, we specified a ket and a message. The first field will be used to group tuples on as part of a fieldsGrouping that will be shown when the topology definition is shown.
 
 To ensure the "at least once" processing semantics of Storm, every tuple that is receive should be acknowledged, either by an Ack or a Fail. This is done by the SendAck and SendFail functions that is part of the boltConn interface. To enable Storm to build up its ack directed acyclic graph (DAG): no emission may be anchored to a tuple that has already been acked. The Storm topology will panic if this occurs.
 
-##Spouts
+## Spouts
+
 This section will describe how to write spouts using the GoStorm library.
 
-###Creating spouts
+### Creating spouts
+
 Similarly to bolts in GoStorm, to create a spout, the Spout interface should be implemented:
 ```go
 type Spout interface {
@@ -146,7 +154,8 @@ The Acked and Failed functions inform a spout that the tuple emited with the spe
 
 A spout can emit tuples when NextTuple is called on it. It may emit any number of tuples, but the developer should keep in mind that emitting multiple tuples will increase message latency in the topology.
 
-###Running a spout
+### Running a spout
+
 Very similarly to running bolts, a main method has to be created to run the spout, specify the encoding that might be used and state whether destination task ids are required. It will typically look something like this:
 ```go
 package main
@@ -164,7 +173,8 @@ func main() {
 }
 ```
 
-###Emitting tuples
+### Emitting tuples
+
 ```go
 type SpoutOutputCollector interface {
     Emit(id string, stream string, fields ...interface{}) (taskIds []int32)
@@ -183,7 +193,8 @@ The ID with which the tuple is emitted will be the ID provided in the Acked and 
 
 The output stream and object tuple list is the same as with bolt emissions.
 
-##Testing without Storm
+## Testing without Storm
+
 It's possible to link up GoStorm spouts and bolts using the mockOutputCollector implementations of GoStorm. This does not require a running Storm cluster or indeed anything other than the GoStorm library. Mock output collectors is a basic way of stringing some Storm components together, while manually calling Execute on a bolt to get the topology running. I am hopefull of obtaining a GoStorm local mode controbution within the next few months. The GoStorm local mode will allow spouts and bolts to be connected in a single process and acks and fails are also handled correctly.
 
 Because mock collectors do not connect to a real Storm topology and because the mock collector implementation in GoStorm is still fairly immature, there are some important differences (and shortcomings) between mock components and real components that should be taken into account when testing:
