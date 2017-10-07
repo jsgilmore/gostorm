@@ -10,7 +10,7 @@ GoStorm also correctly handles the asynchronous behaviour of bolts i.t.o. task I
 
 Currently, the main purpose of GoStorm is to act as a library for Go spouts and bolts that wish to interact with a Storm topology. The topology definition itself should still be done in Java and a shell spout or bolt is still required for each Go spout or bolt. See the storm-starter WordCountTopology on how to do this.
 
-For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the [storm-starter](https://github.com/nathanmarz/storm-starter) WordCountTopology. GoStorm also contains mock output collector implementations that allows a developer to test her code code, before having to submit it as part of a Storm cluster.
+For testing and evaluation purposes, the GoStorm release also contains its own splitsentence.go implementation that replaces the python splitsentence.py implementation in the [storm-starter](https://github.com/apache/storm/tree/master/examples/storm-starter) WordCountTopology. GoStorm also contains mock output collector implementations that allows a developer to test her code code, before having to submit it as part of a Storm cluster.
 
 GoStorm implements (and enforces) the Storm [multilang protocol](https://github.com/nathanmarz/storm/wiki/Multilang-protocol). Apart from implementing the multilang JSON protocol that is used by Storm shell components, GoStorm also implements a protocol buffer binary encoding scheme for improved performance. The protocol buffer encoding requires the Storm [protoshell](https://github.com/jsgilmore/protoshell) multilang serialiser and Storm 0.9.2 or later.
 
@@ -198,3 +198,8 @@ The output stream and object tuple list is the same as with bolt emissions.
 It's possible to link up GoStorm spouts and bolts using the mockOutputCollector implementations of GoStorm. This does not require a running Storm cluster or indeed anything other than the GoStorm library. Mock output collectors is a basic way of stringing some Storm components together, while manually calling Execute on a bolt to get the topology running. I am hopefull of obtaining a GoStorm local mode controbution within the next few months. The GoStorm local mode will allow spouts and bolts to be connected in a single process and acks and fails are also handled correctly.
 
 Because mock collectors do not connect to a real Storm topology and because the mock collector implementation in GoStorm is still fairly immature, there are some important differences (and shortcomings) between mock components and real components that should be taken into account when testing:
+
+## Deploying to Storm
+
+
+For an example of how to build and deploy a jar containing a Go ShellBolt to a Storm cluster (using the above splitsentence implementation) see https://github.com/sixgill/gostorm-runner.
