@@ -19,10 +19,11 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
+	"io"
+
 	proto "github.com/jsgilmore/gostorm/Godeps/_workspace/src/github.com/gogo/protobuf/proto"
 	"github.com/jsgilmore/gostorm/core"
 	"github.com/jsgilmore/gostorm/messages"
-	"io"
 )
 
 func NewProtobufInputFactory() core.InputFactory {
@@ -129,8 +130,8 @@ func (this *protobufInput) constructInput(contents ...interface{}) [][]byte {
 }
 
 func (this *protobufInput) decodeInput(contentList [][]byte, contentStructs ...interface{}) {
-	for i, content := range contentStructs {
-		err := proto.Unmarshal(contentList[i], content.(proto.Message))
+	for i, content := range contentList {
+		err := proto.Unmarshal(content, contentStructs[i].(proto.Message))
 		if err != nil {
 			panic(err)
 		}
