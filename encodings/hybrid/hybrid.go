@@ -121,8 +121,8 @@ func (this *hybridInput) constructInput(contents ...interface{}) []interface{} {
 }
 
 func (this *hybridInput) decodeInput(contentList []interface{}, contentStructs ...interface{}) {
-	for i, content := range contentStructs {
-		err := proto.Unmarshal(*contentList[i].(*[]byte), content.(proto.Message))
+	for i, content := range contentList {
+		err := proto.Unmarshal(*content.(*[]byte), contentStructs[i].(proto.Message))
 		if err != nil {
 			panic(err)
 		}
